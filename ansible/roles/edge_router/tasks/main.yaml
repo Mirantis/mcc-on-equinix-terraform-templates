@@ -1,0 +1,26 @@
+---
+- import_tasks: ../common/tasks/main.yaml
+
+- name: Configuring Vlan Interfaces
+  template:
+    src: "{{ config_vlan_interfaces_template }}"
+    dest: /etc/network/interfaces.d/vlans.cfg
+    owner: root
+    group: root
+    mode: 0644
+  register: config_vlan_interfaces
+  become: true
+  notify:
+  - restart networking
+
+- name: Make sure that networking was restarted after initial vlan config setup
+  meta: flush_handlers
+
+- name: Configuring port forwarding per VLAN
+  sysctl:
+    name: "net/ipv4/conf/{{ initial_bond_name }}.{{ item.vnid }}/forwarding"
+    value: 1
+    state: present
+    sysctl_file: /etc/sysctl.conf
+    reload: yes
+  loop: "{{ network_configuration.vlan }}"

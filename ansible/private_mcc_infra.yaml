@@ -1,0 +1,15 @@
+---
+- hosts: routers
+  gather_facts: no
+  become: yes
+  roles:
+    - role: edge_router
+    - role: squid_proxy
+    - role: dhcp_relay
+      when: isc_relay_dhcp_endpoint != ""
+- hosts: seed
+  gather_facts: no
+  become: yes
+  roles:
+    - role: mcc_seed
+    - role: docker

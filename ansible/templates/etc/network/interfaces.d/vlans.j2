@@ -1,0 +1,11 @@
+######### Network VLANS
+{% for vlan in network_configuration.vlan %}
+
+auto {{ initial_bond_name }}.{{ vlan.vnid }}
+iface {{ initial_bond_name }}.{{ vlan.vnid }} inet static
+    address {{ vlan.router_addr }}
+    netmask {{ vlan.mask }}
+    vlan-raw-device {{ initial_bond_name }}
+
+{% endfor %}
+######### End of Network VLANS

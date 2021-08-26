@@ -1,0 +1,37 @@
+---
+# path to network configuration file
+network_config_path: equinix_network_config.yaml
+
+# Edge router configuration
+
+## VLAN configuration
+### default files for edge router iface/packet forwarding config
+config_vlan_interfaces_template: etc/network/interfaces.d/vlans.j2
+config_sysctl_template: etc/sysctl.conf.j2
+
+### initial bond iface name, created at the Equinix instance running as edge router
+initial_bond_name: bond0
+
+## DHCP relay configuration
+config_dhcp_relay_template: etc/default/isc-dhcp-relay.j2
+
+### Define server('s comma-separated) to relay DHCP requests to, leave empty if no relay needed
+isc_relay_dhcp_endpoint: ""
+
+## Squid proxy configuration
+
+config_squid_proxy_template: etc/squid/squid.conf.j2
+squid_cache_config: "ufs /var/spool/squid 100 16 256"
+squid_cache_port: "3128"
+
+# Seed node configuration
+seed_username: "ubuntu"
+### initial bond iface name in the seed node needeed to build bridge
+seed_initial_bond_name: bond0
+config_seed_interfaces_template: etc/network/interfaces.d/bridge.j2
+# default equinix nameservers to be set during bridge initialization
+seed_bridge_nameservers: "147.75.207.208 147.75.207.207"
+
+## Seed node docker configuration
+seed_docker_daemon_template: etc/docker/daemon.json.j2
+seed_docker_bip: "172.17.0.1/16"

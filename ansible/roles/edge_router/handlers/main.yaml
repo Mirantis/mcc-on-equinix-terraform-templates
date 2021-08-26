@@ -1,0 +1,2 @@
+---
+- import_tasks: roles/common/handlers/main.yaml

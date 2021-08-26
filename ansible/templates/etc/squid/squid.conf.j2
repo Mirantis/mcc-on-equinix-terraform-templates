@@ -1,0 +1,61 @@
+# ACL port configuration
+acl SSL_ports port 443
+acl Safe_ports port 80         # http
+acl Safe_ports port 443        # https
+acl Safe_ports port 70         # gopher
+acl Safe_ports port 210        # wais
+acl Safe_ports port 1025-65535 # unregistered ports
+acl Safe_ports port 280        # http-mgmt
+acl Safe_ports port 488        # gss-http
+acl Safe_ports port 591        # filemaker
+acl Safe_ports port 777        # multiling http
+acl CONNECT method CONNECT
+
+# Deny requests to certain unsafe ports
+http_access deny !Safe_ports
+# Deny CONNECT to other than secure SSL ports
+http_access deny CONNECT !SSL_ports
+
+# Only allow cachemgr access from localhost
+http_access allow localhost manager
+http_access deny manager
+
+# allow link-local prefix
+acl localnet src 169.254.0.0/16     # RFC 3927 link-local (directly plugged) machines
+
+# ACL allow/deny configuration depends on MCC cluster type
+{% for vlan in network_configuration.vlan %}
+
+{% set v_subnet = vlan.subnet ~ '/' ~ vlan.mask%}
+{% set acl_name = 'vlan_' ~ vlan.vnid %}
+{% set acl_rule = 'deny' %}
+{% if vlan.mcc_regional == true %}
+{% set acl_name = acl_name ~ '_mcc_regional'%}
+{% set acl_rule = 'allow' %}
+{% else %}
+{% set acl_name = acl_name ~ '_mcc_managed'%}
+{% endif %}
+
+acl {{ acl_name }} src {{ v_subnet | ansible.netcommon.ipaddr('network/prefix') }}
+http_access {{ acl_rule }}  {{ acl_name }}
+
+{% endfor %}
+
+http_access deny all
+
+# Port which will be used in client proxy configuration
+http_port {{ squid_cache_port }}
+
+# Leave coredumps in the first cache dir
+coredump_dir /var/spool/squid
+
+# Refresh patterns
+refresh_pattern -i (/cgi-bin/|\?) 0    0%    0
+refresh_pattern \/(Packages|Sources)(|\.bz2|\.gz|\.xz)$ 0 0% 0 refresh-ims
+refresh_pattern \/Release(|\.gpg)$ 0 0% 0 refresh-ims
+refresh_pattern \/InRelease$ 0 0% 0 refresh-ims
+refresh_pattern \/(Translation-.*)(|\.bz2|\.gz|\.xz)$ 0 0% 0 refresh-ims
+refresh_pattern . 0 20% 4320
+
+# Cache config
+cache_dir {{ squid_cache_config }}

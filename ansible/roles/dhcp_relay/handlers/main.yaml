@@ -1,0 +1,5 @@
+---
+- name: restart isc-dhcp-relay
+  service:
+    name: isc-dhcp-relay
+    state: restarted

@@ -1,0 +1,24 @@
+# Defaults for isc-dhcp-relay initscript
+# sourced by /etc/init.d/isc-dhcp-relay
+# installed at /etc/default/isc-dhcp-relay by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# What servers should the DHCP relay forward requests to?
+SERVERS="{{ isc_relay_dhcp_endpoint | replace(',', ' ') }}"
+
+# Specifies a downstream network interface: an interface  from  which  requests  from
+# clients  and  other  relay  agents  will  be  accepted
+{% set ns = namespace(d_ifaces="") %}
+{% for vlan in network_configuration.vlan %}
+{% set ns.d_ifaces = ns.d_ifaces ~ '-id ' ~ initial_bond_name ~ '.' ~ vlan.vnid ~ ' ' %}
+{% endfor %}
+OPTIONS="-iu {{ initial_bond_name }}.{{ network_configuration.seed.vlan_id }} {{ ns.d_ifaces }}"
+# interface that will be commonly used for forwarding requests/replies
+# between members<>edge-router<>dhcp-server
+INTERFACES="{{ initial_bond_name }}.{{ network_configuration.seed.vlan_id }}"
+# above interface is configured at the edge router for that particular vlan (mgmt/regional)
+### also such -id , -iu scheme needed to avoid cases when dhcp lease answering on upstream interface
+### according to bugs like https://redmine.pfsense.org/issues/9466

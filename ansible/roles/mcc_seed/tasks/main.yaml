@@ -1,0 +1,36 @@
+---
+- import_tasks: ../common/tasks/main.yaml
+
+- name: Install bridge-utils
+  ansible.builtin.package:
+    name: bridge-utils
+    state: present
+
+- name: Configuring Bridge based at vlan iface
+  template:
+    src: "{{ config_seed_interfaces_template }}"
+    dest: /etc/network/interfaces.d/bridge.cfg
+    owner: root
+    group: root
+    mode: 0644
+  register: config_seed_interfaces
+  become: true
+  notify:
+  - restart networking
+
+- name: Make sure that networking was restarted after initial bridge config setup
+  meta: flush_handlers
+
+- name: Create seed user
+  ansible.builtin.user:
+    name: "{{ seed_username }}"
+    state: present
+    shell: /bin/bash
+    groups: sudo
+    append: yes
+
+- name: Deploy SSH Public Key
+  ansible.posix.authorized_key:
+    user: "{{ seed_username }}"
+    state: present
+    key: "{{ lookup('file', '{{ ansible_ssh_public_key_file }}') }}"
