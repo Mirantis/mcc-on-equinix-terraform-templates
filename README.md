@@ -45,7 +45,7 @@ terraform apply
    in scope of inter-vlan operations, both for edge router and the
    seed node. Note that by default seed node will have connectivity
    with all created vlans via edge-router.
-   `ansible-hosts-${your_env_name}.ini` file contains credentials
+   `ansible-hosts.ini` file contains credentials
    needed to access in created nodes. Review files before ansible
    playbook start
 
@@ -56,13 +56,13 @@ terraform apply
 ansible-lint ansible/private_mcc_infra.yaml
 
 ansible-playbook ansible/private_mcc_infra.yaml \
--i ansible-hosts-${your_env_name}.ini \
+-i ansible-hosts.ini \
 -e "network_config_path=$(pwd)/equinix_network_config.yaml" -vvv
 ```
 
 8. Login into seed node using `ubuntu` username and your specified
    ssh private key. Credentials and endpoints can be found in
-   `ansible-hosts-${your_env_name}.ini`. Start MCC bootstrap.
+   `ansible-hosts.ini`. Start MCC bootstrap.
 
 9. After bootstrap, you need to re-run playbook with
    `mgmt_dhcp_addr` (or addresses comma-separated) pointed to
@@ -73,7 +73,7 @@ ansible-playbook ansible/private_mcc_infra.yaml \
 ansible-lint ansible/private_mcc_infra.yaml
 
 ansible-playbook ansible/private_mcc_infra.yaml \
--i ansible-hosts-${your_env_name}.ini \
+-i ansible-hosts.ini \
 -e "network_config_path=$(pwd)/equinix_network_config.yaml" \
 -e "isc_relay_dhcp_endpoint=${mgmt_dhcp_addr}" -vvv
 ```

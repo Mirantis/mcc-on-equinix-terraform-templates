@@ -102,3 +102,14 @@ and seed node instance will be deployed
 in that VLAN.
 EOT
 }
+
+# Artifacts configuration
+variable "ansible_artifacts_dir" {
+  type        = string
+  default     = ""
+  description = <<EOT
+If not empty, host and network configuration files,
+generated for ansible playbook,
+will be stored under desired directory
+EOT
+}

@@ -24,6 +24,9 @@ locals {
   router_meta = {
     public_addr = metal_device.edge.access_public_ipv4
   }
+
+  inventory_file      = "ansible-hosts.ini"
+  network_config_file = "equinix_network_config.yaml"
 }
 
 resource "metal_vlan" "mcc_vlan" {
@@ -124,7 +127,7 @@ resource "metal_port_vlan_attachment" "vlan_to_seed" {
 }
 
 resource "local_file" "ansible-inventory" {
-  filename = "ansible-hosts-${var.edge_hostname}.ini"
+  filename = var.ansible_artifacts_dir != "" ? "${var.ansible_artifacts_dir}/${local.inventory_file}" : local.inventory_file
   content  = <<EOT
 [routers]
 ${metal_device.edge.access_public_ipv4}
@@ -139,7 +142,7 @@ EOT
 }
 
 resource "local_file" "network_config" {
-  filename = "equinix_network_config.yaml"
+  filename = var.ansible_artifacts_dir != "" ? "${var.ansible_artifacts_dir}/${local.network_config_file}" : local.network_config_file
   content  = <<EOT
 ${yamlencode({ "vlan" : local.vlan_meta, "seed" : local.seed_meta, "router" : local.router_meta, "metro" : var.metro })}
 EOT
