@@ -1,0 +1,6 @@
+{% for vlan in network_configuration.vlan %}
+allow {{ (vlan.subnet + "/" + vlan.mask) | ansible.netcommon.ipaddr('net') }}
+{% endfor %}
+
+# Log files location.
+logdir /var/log/chrony

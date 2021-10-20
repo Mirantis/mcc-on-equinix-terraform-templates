@@ -5,6 +5,7 @@
   roles:
     - role: edge_router
     - role: squid_proxy
+    - role: ntp_server
     - role: dhcp_relay
       when: isc_relay_dhcp_endpoint != ""
 - hosts: seed

@@ -24,6 +24,9 @@ config_squid_proxy_template: etc/squid/squid.conf.j2
 squid_cache_config: "ufs /var/spool/squid 100 16 256"
 squid_cache_port: "3128"
 
+## NTP server configuration
+config_chrony_template: etc/chrony/chrony.conf.j2
+
 # Seed node configuration
 seed_username: "ubuntu"
 ### initial bond iface name in the seed node needeed to build bridge
