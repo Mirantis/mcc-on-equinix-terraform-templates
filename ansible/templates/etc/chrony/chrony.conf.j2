@@ -4,3 +4,5 @@ allow {{ (vlan.subnet + "/" + vlan.mask) | ansible.netcommon.ipaddr('net') }}
 
 # Log files location.
 logdir /var/log/chrony
+
+local
