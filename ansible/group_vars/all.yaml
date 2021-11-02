@@ -12,6 +12,14 @@ config_sysctl_template: etc/sysctl.conf.j2
 ### initial bond iface name, created at the Equinix instance running as edge router
 initial_bond_name: bond0
 
+## VxLAN configuration
+
+### initial vxlan bridge name
+br_vxlan: br_vxlan
+### default template files for LxLAN vtep interfaces and bridge on edge router
+config_vxlan_interfaces_template: etc/network/interfaces.d/vxlans.j2
+config_vxlan_bridge_template: etc/network/interfaces.d/vxlan_bridge.j2
+
 ## DHCP relay configuration
 config_dhcp_relay_template: etc/default/isc-dhcp-relay.j2
 

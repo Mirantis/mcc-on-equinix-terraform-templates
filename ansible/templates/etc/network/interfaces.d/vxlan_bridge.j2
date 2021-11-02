@@ -1,0 +1,8 @@
+auto {{ br_vxlan }}
+iface {{ br_vxlan }} inet static
+    bridge_ports regex vxlan.*
+    address {{ network_configuration.routers.value[inventory_hostname].vxlan_br_addr }}
+    netmask {{ network_configuration.routers.value[inventory_hostname].vxlan_subnet_mask }}
+    bridge_stp off       # disable Spanning Tree Protocol
+    bridge_waitport 0    # no delay before a port becomes available
+    bridge_fd 0          # no forwarding delay

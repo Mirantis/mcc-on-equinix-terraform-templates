@@ -9,11 +9,39 @@
     group: root
     mode: 0644
   become: true
-  notify:
-  - restart networking
 
-- name: Make sure that networking was restarted after initial vlan config setup
+- name: Configuring VxLAN Interfaces
+  template:
+    src: "{{ config_vxlan_interfaces_template }}"
+    dest: /etc/network/interfaces.d/vxlans.cfg
+    owner: root
+    group: root
+    mode: 0644
+  become: true
+  notify:
+    - restart networking
+
+- name: Configuring VxLAN Bridge
+  template:
+    src: "{{ config_vxlan_bridge_template }}"
+    dest: /etc/network/interfaces.d/vxlan_bridge.cfg
+    owner: root
+    group: root
+    mode: 0644
+  become: true
+  notify:
+    - restart networking
+
+- name: Make sure that networking was restarted after initial bridge config setup
   meta: flush_handlers
+
+- name: Configuring port forwarding for VxLAN Bridge
+  sysctl:
+    name: "net/ipv4/conf/{{ br_vxlan }}/forwarding"
+    value: 1
+    state: present
+    sysctl_file: /etc/sysctl.conf
+    reload: yes
 
 - name: Configuring port forwarding per VLAN
   sysctl:

@@ -16,13 +16,20 @@ variable "edge_size" {
   type    = string
 }
 
-variable "metro" {
-  type = string
+variable "metros" {
+  type = list(object({
+    metro        = string
+    vlans_amount = number
+    deploy_seed  = bool
+  }))
 
   validation {
-    condition     = var.metro != ""
-    error_message = "Metro should be specified explicitly."
+    condition = alltrue([
+      for o in var.metros : o.metro != "" && o.vlans_amount > 0 && o.vlans_amount < 16
+    ])
+    error_message = "Metro should be specified explicitly and vlans_amount >0 and <16."
   }
+
 }
 
 variable "edge_os" {
@@ -78,29 +85,6 @@ variable "edge_hostname" {
     condition     = length(var.edge_hostname) > 4
     error_message = "Variable edge_hostname should be human readable and contain at least 4 characters."
   }
-}
-
-variable "vlans_amount" {
-  type        = number
-  description = <<EOT
-Desired amount of created VLAN's for MCC installations
-EOT
-
-  validation {
-    condition     = var.vlans_amount > 0
-    error_message = "Value of vlans_amount should be more than 0."
-  }
-}
-
-variable "deploy_seed" {
-  type        = bool
-  default     = true
-  description = <<EOT
-If true, one of created VLAN's will
-be choosed as mgmt/regional scoped
-and seed node instance will be deployed
-in that VLAN.
-EOT
 }
 
 # Artifacts configuration

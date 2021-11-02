@@ -12,12 +12,12 @@ SERVERS="{{ isc_relay_dhcp_endpoint | replace(',', ' ') }}"
 # Specifies a downstream network interface: an interface  from  which  requests  from
 # clients  and  other  relay  agents  will  be  accepted
 {% set ns = namespace() %}
-{% set ns.u_ifaces="" %}
-{% set ns.d_ifaces="" %}
-{% set ns.ifaces="" %}
+{% set ns.u_ifaces="-iu " ~ br_vxlan %}
+{% set ns.d_ifaces="-id " ~ br_vxlan %}
+{% set ns.ifaces=br_vxlan %}
 {% for vlan in network_configuration.routers.value[inventory_hostname].vlans %}
 {%      set ns.ifaces = ns.ifaces ~ ' ' ~ initial_bond_name ~ '.' ~ vlan.vlan_id %}
-{%      set ns.d_ifaces = ns.d_ifaces ~ '-id ' ~ initial_bond_name ~ '.' ~ vlan.vlan_id ~ ' ' %}
+{%      set ns.d_ifaces = ns.d_ifaces ~ ' -id ' ~ initial_bond_name ~ '.' ~ vlan.vlan_id %}
 {%      if vlan.mcc_regional %}
 {%          set ns.u_ifaces = ns.u_ifaces ~ ' -iu ' ~ initial_bond_name ~ '.' ~ vlan.vlan_id %}
 {%      endif %}

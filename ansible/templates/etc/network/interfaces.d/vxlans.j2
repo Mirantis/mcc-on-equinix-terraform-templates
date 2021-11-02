@@ -1,0 +1,14 @@
+######### Network VxLANs
+{% for vxlan in network_configuration.routers.value[inventory_hostname].vxlans %}
+
+auto vxlan.{{ vxlan.vnid }}
+iface vxlan.{{ vxlan.vnid }} inet manual
+    pre-up ip link add $IFACE type vxlan id {{ vxlan.vnid }} remote {{ vxlan.remote_addr }} dstport 4789 dev {{ initial_bond_name }} || true
+    up ip link set $IFACE up
+    down ip link set $IFACE down
+    post-down ip link del $IFACE || true
+    up route add -net {{ vxlan.remote_subnet }} gw {{ vxlan.next_hop }} dev {{ br_vxlan }}
+
+
+{% endfor %}
+######### End of Network VLANS

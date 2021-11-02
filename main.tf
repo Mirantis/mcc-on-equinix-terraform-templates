@@ -1,6 +1,6 @@
 # SSH Keys management ##########################################
-# Create SSH Keys if they are not exist
 
+# Create SSH Keys if they are not exist
 resource "metal_project_ssh_key" "ssh_key_object" {
   count = var.use_existing_ssh_key_name == "" ? 1 : 0
 
@@ -21,9 +21,11 @@ data "metal_project_ssh_key" "infra_ssh" {
 
 # Create routers in each configured metro
 resource "metal_device" "edge" {
+  count = length(var.metros)
+
   hostname            = "mcc-edge-router-${var.edge_hostname}"
   plan                = var.edge_size
-  metro               = var.metro
+  metro               = var.metros[count.index].metro
   operating_system    = var.edge_os
   billing_cycle       = var.billing_cycle
   project_id          = var.project_id
@@ -32,66 +34,116 @@ resource "metal_device" "edge" {
 
 # Change network mode to hybrid for the edge instance
 resource "metal_device_network_type" "edge" {
-  device_id = metal_device.edge.id
+  count = length(metal_device.edge)
+
+  device_id = metal_device.edge[count.index].id
   type      = "hybrid"
 }
 
 locals {
   routers_meta = {
-    "${var.metro}" = {
-      metro        = var.metro
-      vlan_subnet  = "192.168.0.0/20"
-      private_addr = metal_device.edge.access_private_ipv4,
-      public_addr  = metal_device.edge.access_public_ipv4,
-      device_id    = metal_device.edge.id
-      port_id      = metal_device_network_type.edge.id
-    }
+    for i, m in var.metros :
+    (m.metro) => {
+      metro             = m.metro
+      vlan_subnet       = "192.168.${i * 16}.0/20"
+      vxlan_br_addr     = "192.168.255.${i + 1}"
+      vxlan_subnet_mask = "255.255.255.0",
+      private_addr      = metal_device.edge[i].access_private_ipv4,
+      public_addr       = metal_device.edge[i].access_public_ipv4,
+      device_id         = metal_device.edge[i].id
+      port_id           = metal_device_network_type.edge[i].id
+  } }
+}
+
+# VxLANs management ##########################################
+
+locals {
+  vxlans = {
+    for i, mi in var.metros :
+    (mi.metro) => [
+      for j, mj in var.metros : {
+        vnid          = (i > j) ? (j + 1) * 1000 + i + 1 : (i + 1) * 1000 + j + 1
+        remote_addr   = local.routers_meta[var.metros[j].metro].private_addr
+        next_hop      = local.routers_meta[var.metros[j].metro].vxlan_br_addr
+        remote_subnet = local.routers_meta[var.metros[j].metro].vlan_subnet
+      } if i != j
+    ]
   }
 }
 
+output "vxlans" {
+  value = local.vxlans
+}
 
 # VLANs management ##########################################
-locals {
-  vlan_meta = [
-    for i in range(var.vlans_amount) : {
-      vnid        = metal_vlan.mcc_vlan[i].vxlan
-      subnet      = "192.168.${i + 1}.0"
-      mask        = "255.255.255.0"
-      router_addr = "192.168.${i + 1}.1"
-      # choose first vlan as mgmt/regional scoped if seed node deployed
-      mcc_regional = (i == 0) && var.deploy_seed ? true : false
-    }
-  ]
 
-  vlans = {
-    "${var.metro}" = [
-      for vlan in local.vlan_meta : {
-        metro        = var.metro
-        vlan_id      = vlan.vnid
+locals {
+  vlans_by_metro = {
+    for i, mi in var.metros :
+    (mi.metro) => [
+      for j in range(mi.vlans_amount) : {
+        metro       = mi.metro
+        subnet      = "192.168.${i * 16 + j}.0",
+        mask        = "255.255.255.0",
+        router_addr = "192.168.${i * 16 + j}.1",
+        # choose first vlan as mgmt/regional scoped if seed node deployed
+        mcc_regional = (j == 0) && mi.deploy_seed ? true : false
+      }
+  ] }
+
+  vlans_list = flatten([
+    for metro in local.vlans_by_metro : [
+      for vlan in metro : {
+        metro        = vlan.metro
         subnet       = vlan.subnet
         mask         = vlan.mask
         router_addr  = vlan.router_addr
         mcc_regional = vlan.mcc_regional
       }
-  ] }
+  ]])
+
+  vlans_map = {
+    for vlan in local.vlans_list :
+    (vlan.subnet) => {
+      metro        = vlan.metro
+      subnet       = vlan.subnet
+      mask         = vlan.mask
+      router_addr  = vlan.router_addr
+      mcc_regional = vlan.mcc_regional
+  } }
 }
 
 resource "metal_vlan" "mcc_vlan" {
-  metro      = var.metro
-  project_id = var.project_id
+  for_each = local.vlans_map
 
-  count       = var.vlans_amount
-  description = "mcc_${var.edge_hostname}_192.168.${count.index + 1}.0"
+  metro       = each.value.metro
+  description = "mcc_${var.edge_hostname}_${each.value.subnet}"
+  project_id  = var.project_id
 }
 
 # Attach vlans to the edge instance
 resource "metal_port_vlan_attachment" "vlan_to_router" {
   depends_on = [metal_device.edge, metal_vlan.mcc_vlan]
-  device_id  = metal_device_network_type.edge.id
-  port_name  = "bond0"
+  for_each   = metal_vlan.mcc_vlan
 
-  count     = var.vlans_amount
-  vlan_vnid = metal_vlan.mcc_vlan[count.index].vxlan
+  port_name = "bond0"
+  device_id = local.routers_meta[each.value.metro].port_id
+  vlan_vnid = each.value.vxlan
+}
+
+locals {
+  vlans = {
+    for m in var.metros :
+    (m.metro) => [
+      for subnet, vlan in metal_vlan.mcc_vlan : {
+        metro        = vlan.metro
+        vlan_id      = vlan.vxlan
+        subnet       = subnet
+        mask         = local.vlans_map[subnet].mask
+        router_addr  = local.vlans_map[subnet].router_addr
+        mcc_regional = local.vlans_map[subnet].mcc_regional
+      } if m.metro == vlan.metro
+  ] }
 }
 
 output "vlans" {
@@ -101,25 +153,27 @@ output "vlans" {
 # Seed nodes management ##########################################
 
 locals {
-  seed_meta = {
-    deploy      = var.deploy_seed
-    addr        = cidrhost("${local.vlan_meta[0].subnet}/24", 2)
-    public_addr = join("", metal_device.seed.*.access_public_ipv4)
-    mask        = local.vlan_meta[0].mask
-    vlan_id     = local.vlan_meta[0].vnid
-    static_route = {
-      subnet   = "192.168.0.0/16"
-      next_hop = local.vlan_meta[0].router_addr
-    }
+  seed_nodes_meta = {
+    for m in var.metros :
+    (m.metro) => {
+      addr    = cidrhost("${local.vlans[m.metro][0].subnet}/24", 2)
+      mask    = local.vlans[m.metro][0].mask
+      vlan_id = local.vlans[m.metro][0].vlan_id
+      metro   = m.metro
+      static_route = {
+        subnet   = "192.168.0.0/16"
+        next_hop = local.vlans[m.metro][0].router_addr
+      }
+    } if m.deploy_seed
   }
 }
 
 resource "metal_device" "seed" {
-  count = var.deploy_seed ? 1 : 0
+  for_each = local.seed_nodes_meta
 
   hostname            = "mcc-seed-${var.edge_hostname}"
   plan                = var.edge_size
-  metro               = var.metro
+  metro               = each.key
   operating_system    = var.edge_os
   billing_cycle       = var.billing_cycle
   project_id          = var.project_id
@@ -140,33 +194,33 @@ locals {
   seed_nodes = {
     for device in metal_device.seed :
     (device.access_public_ipv4) => {
-      metro        = var.metro
-      addr         = local.seed_meta.addr
-      mask         = local.seed_meta.mask
-      vlan_id      = local.seed_meta.vlan_id
-      static_route = local.seed_meta.static_route
+      metro        = local.seed_nodes_meta[device.metro].metro
+      addr         = local.seed_nodes_meta[device.metro].addr
+      mask         = local.seed_nodes_meta[device.metro].mask
+      vlan_id      = local.seed_nodes_meta[device.metro].vlan_id
+      static_route = local.seed_nodes_meta[device.metro].static_route
       public_addr  = device.access_public_ipv4
   } }
 }
 
 # Change network mode to hybrid for the seed instance
 resource "metal_device_network_type" "seed_network" {
-  count = var.deploy_seed ? 1 : 0
+  for_each = metal_device.seed
 
-  device_id = metal_device.seed[count.index].id
+  device_id = each.value.id
   # by default 'layer3' means hybrid-bonded
   type = "layer3"
 }
 
 # Attach mgmt vlan to the seed instance
 resource "metal_port_vlan_attachment" "vlan_to_seed" {
-  count = var.deploy_seed ? 1 : 0
+  for_each = metal_device.seed
 
   depends_on = [metal_device.seed, metal_vlan.mcc_vlan]
-  device_id  = metal_device_network_type.seed_network[count.index].id
+  device_id  = each.value.id
   port_name  = "bond0"
   # first vlan is mgmt related by default
-  vlan_vnid = local.vlan_meta[0].vnid
+  vlan_vnid = local.vlans[each.key][0].vlan_id
 }
 
 output "seed_nodes" {
@@ -174,13 +228,16 @@ output "seed_nodes" {
 }
 
 # Output management ##########################################
+
 locals {
   routers = {
     for name, router in local.routers_meta :
     (router.public_addr) => {
-      metro        = router.metro
-      private_addr = router.private_addr
-      public_addr  = router.public_addr
+      metro             = router.metro
+      vxlan_br_addr     = router.vxlan_br_addr
+      vxlan_subnet_mask = router.vxlan_subnet_mask
+      private_addr      = router.private_addr
+      public_addr       = router.public_addr
       vlans = [
         for vlan in local.vlans[name] : {
           vlan_id      = vlan.vlan_id
@@ -189,12 +246,20 @@ locals {
           subnet       = vlan.subnet
           mcc_regional = vlan.mcc_regional
       }]
+      vxlans = [
+        for vxlan in local.vxlans[name] : {
+          vnid          = vxlan.vnid
+          remote_addr   = vxlan.remote_addr
+          next_hop      = vxlan.next_hop
+          remote_subnet = vxlan.remote_subnet
+      }]
   } }
 }
 
 output "routers" {
   value = local.routers
 }
+
 # Output management ##########################################
 
 locals {
@@ -205,9 +270,13 @@ resource "local_file" "ansible-inventory" {
   filename = var.ansible_artifacts_dir != "" ? "${var.ansible_artifacts_dir}/${local.inventory_file}" : local.inventory_file
   content  = <<EOT
 [routers]
-${metal_device.edge.access_public_ipv4}
+%{for router in local.routers~}
+    ${router.public_addr}
+%{endfor~}
 [seed]
-${join("", metal_device.seed.*.access_public_ipv4)}
+%{for seed in local.seed_nodes~}
+    ${seed.public_addr}
+%{endfor~}
 [all:vars]
 ansible_ssh_private_key_file = ${abspath(var.ssh_private_key_path)}
 ansible_ssh_public_key_file  = ${abspath(var.ssh_public_key_path)}
