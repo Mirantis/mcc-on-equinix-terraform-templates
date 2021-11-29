@@ -1,8 +1,8 @@
 ######### Network VLANS
-{% for vlan in network_configuration.vlan %}
+{% for vlan in network_configuration.routers.value[inventory_hostname].vlans %}
 
-auto {{ initial_bond_name }}.{{ vlan.vnid }}
-iface {{ initial_bond_name }}.{{ vlan.vnid }} inet static
+auto {{ initial_bond_name }}.{{ vlan.vlan_id }}
+iface {{ initial_bond_name }}.{{ vlan.vlan_id }} inet static
     address {{ vlan.router_addr }}
     netmask {{ vlan.mask }}
     vlan-raw-device {{ initial_bond_name }}

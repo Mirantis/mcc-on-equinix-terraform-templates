@@ -12,6 +12,11 @@
   notify:
   - restart networking
 
+- name: Install bridge-utils
+  ansible.builtin.package:
+    name: bridge-utils
+    state: present
+
 - name: Get network configuration from file
   include_vars:
     file: "{{ network_config_path }}"

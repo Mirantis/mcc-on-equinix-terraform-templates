@@ -1,15 +1,15 @@
 # sub iface for vlan connectivity
-auto {{ seed_initial_bond_name }}.{{ network_configuration.seed.vlan_id }}
-iface {{ seed_initial_bond_name }}.{{ network_configuration.seed.vlan_id }} inet manual
+auto {{ seed_initial_bond_name }}.{{ network_configuration.seed_nodes.value[inventory_hostname].vlan_id }}
+iface {{ seed_initial_bond_name }}.{{ network_configuration.seed_nodes.value[inventory_hostname].vlan_id }} inet manual
 
 auto br0
 iface br0 inet static
-    address {{ network_configuration.seed.addr }}
-    netmask {{ network_configuration.seed.mask }}
-    bridge_ports {{ seed_initial_bond_name }}.{{ network_configuration.seed.vlan_id }}
+    address {{ network_configuration.seed_nodes.value[inventory_hostname].addr }}
+    netmask {{ network_configuration.seed_nodes.value[inventory_hostname].mask }}
+    bridge_ports {{ seed_initial_bond_name }}.{{ network_configuration.seed_nodes.value[inventory_hostname].vlan_id }}
     bridge_stp off       # disable Spanning Tree Protocol
     bridge_waitport 0    # no delay before a port becomes available
     bridge_fd 0          # no forwarding delay
     # dns-* options are implemented by the resolvconf package, if installed
     dns-nameservers {{ seed_bridge_nameservers }}
-    up route add -net {{ network_configuration.seed.static_route.subnet }} gw {{ network_configuration.seed.static_route.next_hop }} dev br0
+    up route add -net {{ network_configuration.seed_nodes.value[inventory_hostname].static_route.subnet }} gw {{ network_configuration.seed_nodes.value[inventory_hostname].static_route.next_hop }} dev br0

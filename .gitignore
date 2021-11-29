@@ -4,9 +4,9 @@
 # .tfstate files
 *.tfstate
 *.tfstate.*
-terraform.tfvars
+terraform.tfvars*
 
 # temp credentials and configurations for equinix vlan infra
 *ansible-hosts*
-equinix_network_config.yaml
+output.json
 *ssh_key*

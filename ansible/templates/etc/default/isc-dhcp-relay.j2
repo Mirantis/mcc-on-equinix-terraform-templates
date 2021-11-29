@@ -11,14 +11,23 @@ SERVERS="{{ isc_relay_dhcp_endpoint | replace(',', ' ') }}"
 
 # Specifies a downstream network interface: an interface  from  which  requests  from
 # clients  and  other  relay  agents  will  be  accepted
-{% set ns = namespace(d_ifaces="") %}
-{% for vlan in network_configuration.vlan %}
-{% set ns.d_ifaces = ns.d_ifaces ~ '-id ' ~ initial_bond_name ~ '.' ~ vlan.vnid ~ ' ' %}
+{% set ns = namespace() %}
+{% set ns.u_ifaces="" %}
+{% set ns.d_ifaces="" %}
+{% set ns.ifaces="" %}
+{% for vlan in network_configuration.routers.value[inventory_hostname].vlans %}
+{%      set ns.ifaces = ns.ifaces ~ ' ' ~ initial_bond_name ~ '.' ~ vlan.vlan_id %}
+{%      set ns.d_ifaces = ns.d_ifaces ~ '-id ' ~ initial_bond_name ~ '.' ~ vlan.vlan_id ~ ' ' %}
+{%      if vlan.mcc_regional %}
+{%          set ns.u_ifaces = ns.u_ifaces ~ ' -iu ' ~ initial_bond_name ~ '.' ~ vlan.vlan_id %}
+{%      endif %}
 {% endfor %}
-OPTIONS="-iu {{ initial_bond_name }}.{{ network_configuration.seed.vlan_id }} {{ ns.d_ifaces }}"
+
+OPTIONS="{{ ns.u_ifaces }} {{ ns.d_ifaces }}"
 # interface that will be commonly used for forwarding requests/replies
 # between members<>edge-router<>dhcp-server
-INTERFACES="{{ initial_bond_name }}.{{ network_configuration.seed.vlan_id }}"
+
+INTERFACES="{{ ns.ifaces }}"
 # above interface is configured at the edge router for that particular vlan (mgmt/regional)
 ### also such -id , -iu scheme needed to avoid cases when dhcp lease answering on upstream interface
 ### according to bugs like https://redmine.pfsense.org/issues/9466

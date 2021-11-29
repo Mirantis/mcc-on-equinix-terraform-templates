@@ -1,6 +1,6 @@
 ---
 # path to network configuration file
-network_config_path: equinix_network_config.yaml
+network_config_path: ../output.json
 
 # Edge router configuration
 

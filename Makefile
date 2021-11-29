@@ -15,12 +15,17 @@ apply-tf: init-tf $(ARTIFACTS_OUTPUT_DIR)
 	-auto-approve \
 	-var-file=${TF_VAR_FILE}
 
+output-tf: init-tf
+	terraform output \
+	-state=${ARTIFACTS_OUTPUT_DIR}/apply-tfout \
+	-json > ${ARTIFACTS_OUTPUT_DIR}/output.json
+
 DHCP_SERVER_ENDPOINT :=
-ansible-playbook: $(ARTIFACTS_OUTPUT_DIR)
+ansible-playbook: $(ARTIFACTS_OUTPUT_DIR) output-tf
 	env ANSIBLE_LOG_PATH=${ARTIFACTS_OUTPUT_DIR}/ansible-${BUILD_DATE}.log \
 	ansible-playbook ansible/private_mcc_infra.yaml \
 	-i $(ARTIFACTS_OUTPUT_DIR)/ansible-hosts.ini \
-	-e "network_config_path=$(ARTIFACTS_OUTPUT_DIR)/equinix_network_config.yaml" \
+	-e "network_config_path=$(ARTIFACTS_OUTPUT_DIR)/output.json" \
 	-e "isc_relay_dhcp_endpoint=${DHCP_SERVER_ENDPOINT}"
 
 destroy-tf: init-tf $(ARTIFACTS_OUTPUT_DIR)

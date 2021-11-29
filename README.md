@@ -36,11 +36,12 @@ export METAL_AUTH_TOKEN="XXXXXXXX"
 terraform init
 terraform plan
 terraform apply
+terraform output -json > output.json
 ```
 
 6. As result of `terraform apply` - resources will be created and
    several files generated:
-   `equinix_network_config.yaml` - contains all network
+   `output.json` - contains all network
    specification to provide connectivity for all machines
    in scope of inter-vlan operations, both for edge router and the
    seed node. Note that by default seed node will have connectivity
@@ -55,9 +56,7 @@ terraform apply
 ```bash
 ansible-lint ansible/private_mcc_infra.yaml
 
-ansible-playbook ansible/private_mcc_infra.yaml \
--i ansible-hosts.ini \
--e "network_config_path=$(pwd)/equinix_network_config.yaml" -vvv
+ansible-playbook ansible/private_mcc_infra.yaml -vvv
 ```
 
 8. Login into seed node using `ubuntu` username and your specified
@@ -73,18 +72,17 @@ ansible-playbook ansible/private_mcc_infra.yaml \
 ansible-lint ansible/private_mcc_infra.yaml
 
 ansible-playbook ansible/private_mcc_infra.yaml \
--i ansible-hosts.ini \
--e "network_config_path=$(pwd)/equinix_network_config.yaml" \
 -e "isc_relay_dhcp_endpoint=${mgmt_dhcp_addr}" -vvv
 ```
 
 10. Optionally you may delete the seed node after successful
     MCC bootstrap. Keep `vlans_amount` the same, but turn
-    `deploy_seed` to `false`.
+    `deploy_seed` to `false` inside `terraform.tfvars` file
 
 ```bash
-terraform plan -var deploy_seed=false
-terraform apply -var deploy_seed=false
+terraform plan
+terraform apply
+terraform output -json > output.json
 ```
 
 11. (optionally) Destroy terraform template in case of

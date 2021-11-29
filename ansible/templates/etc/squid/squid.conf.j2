@@ -27,10 +27,10 @@ http_access deny manager
 acl localnet src 169.254.0.0/16     # RFC 3927 link-local (directly plugged) machines
 
 # ACL allow/deny configuration depends on MCC cluster type
-{% for vlan in network_configuration.vlan %}
+{% for vlan in network_configuration.routers.value[inventory_hostname].vlans %}
 
 {% set v_subnet = vlan.subnet ~ '/' ~ vlan.mask%}
-{% set acl_name = 'vlan_' ~ vlan.vnid %}
+{% set acl_name = 'vlan_' ~ vlan.vlan_id %}
 {% set acl_rule = 'deny' %}
 {% if vlan.mcc_regional == true %}
 {% set acl_name = acl_name ~ '_mcc_regional'%}

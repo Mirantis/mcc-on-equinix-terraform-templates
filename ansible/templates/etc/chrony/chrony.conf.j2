@@ -1,4 +1,4 @@
-{% for vlan in network_configuration.vlan %}
+{% for vlan in network_configuration.routers.value[inventory_hostname].vlans %}
 allow {{ (vlan.subnet + "/" + vlan.mask) | ansible.netcommon.ipaddr('net') }}
 {% endfor %}
 

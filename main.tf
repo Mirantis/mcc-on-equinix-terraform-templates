@@ -10,6 +10,19 @@ locals {
       mcc_regional = (i == 0) && var.deploy_seed ? true : false
     }
   ]
+
+  vlans = {
+    "${var.metro}" = [
+      for vlan in local.vlan_meta : {
+        metro        = var.metro
+        vlan_id      = vlan.vnid
+        subnet       = vlan.subnet
+        mask         = vlan.mask
+        router_addr  = vlan.router_addr
+        mcc_regional = vlan.mcc_regional
+      }
+  ] }
+
   seed_meta = {
     deploy      = var.deploy_seed
     addr        = cidrhost("${local.vlan_meta[0].subnet}/24", 2)
@@ -21,12 +34,58 @@ locals {
       next_hop = local.vlan_meta[0].router_addr
     }
   }
-  router_meta = {
-    public_addr = metal_device.edge.access_public_ipv4
+
+  seed_nodes = {
+    for device in metal_device.seed :
+    (device.access_public_ipv4) => {
+      metro        = var.metro
+      addr         = local.seed_meta.addr
+      mask         = local.seed_meta.mask
+      vlan_id      = local.seed_meta.vlan_id
+      static_route = local.seed_meta.static_route
+      public_addr  = device.access_public_ipv4
+  } }
+
+  routers_meta = {
+    "${var.metro}" = {
+      metro        = var.metro
+      vlan_subnet  = "192.168.0.0/20"
+      private_addr = metal_device.edge.access_private_ipv4,
+      public_addr  = metal_device.edge.access_public_ipv4,
+      device_id    = metal_device.edge.id
+      port_id      = metal_device_network_type.edge.id
+    }
   }
 
-  inventory_file      = "ansible-hosts.ini"
-  network_config_file = "equinix_network_config.yaml"
+  routers = {
+    for name, router in local.routers_meta :
+    (router.public_addr) => {
+      metro        = router.metro
+      private_addr = router.private_addr
+      public_addr  = router.public_addr
+      vlans = [
+        for vlan in local.vlans[name] : {
+          vlan_id      = vlan.vlan_id
+          router_addr  = vlan.router_addr
+          mask         = vlan.mask
+          subnet       = vlan.subnet
+          mcc_regional = vlan.mcc_regional
+      }]
+  } }
+
+  inventory_file = "ansible-hosts.ini"
+}
+
+output "routers" {
+  value = local.routers
+}
+
+output "seed_nodes" {
+  value = local.seed_nodes
+}
+
+output "vlans" {
+  value = local.vlans
 }
 
 resource "metal_vlan" "mcc_vlan" {
@@ -138,12 +197,5 @@ ansible_ssh_private_key_file = ${abspath(var.ssh_private_key_path)}
 ansible_ssh_public_key_file  = ${abspath(var.ssh_public_key_path)}
 ansible_user                 = root
 ansible_ssh_common_args      = '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
-EOT
-}
-
-resource "local_file" "network_config" {
-  filename = var.ansible_artifacts_dir != "" ? "${var.ansible_artifacts_dir}/${local.network_config_file}" : local.network_config_file
-  content  = <<EOT
-${yamlencode({ "vlan" : local.vlan_meta, "seed" : local.seed_meta, "router" : local.router_meta, "metro" : var.metro })}
 EOT
 }
