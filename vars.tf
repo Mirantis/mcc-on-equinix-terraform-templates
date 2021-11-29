@@ -21,7 +21,30 @@ variable "metros" {
     metro        = string
     vlans_amount = number
     deploy_seed  = bool
+    routers_dhcp = optional(list(string))
   }))
+
+  description = <<EOT
+example of object:
+"metros": [
+  {
+    "metro": "fr",
+    "vlans_amount": "2",
+    "deploy_seed": true,
+  },
+  {
+    "metro": "da",
+    "vlans_amount": "1",
+    "deploy_seed": true,
+    # routers_dhcp field is optional and may be filled after MCC bootstrap
+    "routers_dhcp": [
+        "192.168.16.21",
+        "192.168.16.22",
+        "192.168.16.23"
+    ]
+  }
+]
+EOT
 
   validation {
     condition = alltrue([

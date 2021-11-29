@@ -41,10 +41,10 @@ resources are created:
 3. Create the `terraform.tfvars` file with all required
    variables declared in `vars.tf`.
 
-   * Specify the amount of VLANs required for Container Cloud as `vlans_amount`.
-     If `deploy_seed` is set to `true`, one of VLANs will be automatically
-     scoped as the management/regional one, and the bootstrap node will be
-     placed on that VLAN.
+   * Specify the amount of VLANs required for Container Cloud as `vlans_amount`
+     in each `metro`. If `deploy_seed` is set to `true`,
+     one of VLANs will be automatically scoped as the management/regional one,
+     and the bootstrap node will be placed on that VLAN.
    * Use the `terraform plan` command to output help messages for each required
      variable.
 
@@ -86,27 +86,28 @@ resources are created:
    4. [Prepare the Equinix Metal configuration](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/qs-equinixv2/conf-cluster-machines.html).
    5. [Finalize the bootstrap](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/qs-equinixv2/finalize-bootstrap.html).
 
-7. When the bootstrap completes, re-run the playbook with
-   the `mgmt_dhcp_addr` comma-separated addresses pointed to
-   IP address(es) of the Ironic DHCP endpoint(s) placed
-   in the management cluster:
+7. When the bootstrap completes, adjust the `routers_dhcp` value
+   in `metros` terraform variable input with list of IP address(es)
+   of the Ironic DHCP endpoint(s) placed in the management/regional cluster
+   and re-run terraform, ansible playbook:
 
    ```bash
-   ansible-lint ansible/private_mcc_infra.yaml
+   terraform plan
+   terraform apply
+   terraform output -json > output.json
 
-   ansible-playbook ansible/private_mcc_infra.yaml \
-   -e "isc_relay_dhcp_endpoint=${mgmt_dhcp_addr}" -vvv
+   ansible-playbook ansible/private_mcc_infra.yaml
    ```
 
-   To obtain `mgmt_dhcp_addr`:
+   To obtain ip addresses itself from the management/regional cluster:
 
    ```bash
    kubectl --kubeconfig kubeconfig.yaml get machines -o yaml | grep privateIp
    ```
 
 8. Optional. Delete the bootstrap node after a successful Container Cloud
-   bootstrap. Keep the `vlans_amount` as is but set `deploy_seed` to `false`
-   in `terraform.tfvars`:
+   management/regional bootstrap. Keep the `vlans_amount` as is
+   but set `deploy_seed` to `false` for related `metro` in `terraform.tfvars`:
 
    ```bash
    terraform plan
