@@ -45,6 +45,7 @@ locals {
     for i, m in var.metros :
     (m.metro) => {
       metro             = m.metro
+      dhcp_addrs        = (m.routers_dhcp != null) ? m.routers_dhcp : []
       vlan_subnet       = "192.168.${i * 16}.0/20"
       vxlan_br_addr     = "192.168.255.${i + 1}"
       vxlan_subnet_mask = "255.255.255.0",
@@ -238,6 +239,7 @@ locals {
       vxlan_subnet_mask = router.vxlan_subnet_mask
       private_addr      = router.private_addr
       public_addr       = router.public_addr
+      dhcp_addrs        = router.dhcp_addrs
       vlans = [
         for vlan in local.vlans[name] : {
           vlan_id      = vlan.vlan_id
@@ -269,7 +271,9 @@ locals {
     routers = {
       hosts = {
         for router in local.routers :
-        (router.public_addr) => {}
+        (router.public_addr) => {
+          dhcp_servers = router.dhcp_addrs
+        }
       }
     }
 

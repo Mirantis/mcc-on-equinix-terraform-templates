@@ -7,7 +7,7 @@
     - role: squid_proxy
     - role: ntp_server
     - role: dhcp_relay
-      when: isc_relay_dhcp_endpoint != ""
+      when: dhcp_servers | length  > 0
 - hosts: seed
   gather_facts: no
   become: yes

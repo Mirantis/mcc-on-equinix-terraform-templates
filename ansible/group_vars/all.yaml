@@ -23,8 +23,9 @@ config_vxlan_bridge_template: etc/network/interfaces.d/vxlan_bridge.j2
 ## DHCP relay configuration
 config_dhcp_relay_template: etc/default/isc-dhcp-relay.j2
 
-### Define server('s comma-separated) to relay DHCP requests to, leave empty if no relay needed
-isc_relay_dhcp_endpoint: ""
+### Define list of the servers for each edge-router
+### to relay DHCP requests to, leave empty if no relay needed
+dhcp_servers: []
 
 ## Squid proxy configuration
 

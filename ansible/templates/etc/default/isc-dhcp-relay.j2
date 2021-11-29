@@ -7,7 +7,7 @@
 #
 
 # What servers should the DHCP relay forward requests to?
-SERVERS="{{ isc_relay_dhcp_endpoint | replace(',', ' ') }}"
+SERVERS="{{ dhcp_servers | join(' ') }}"
 
 # Specifies a downstream network interface: an interface  from  which  requests  from
 # clients  and  other  relay  agents  will  be  accepted
