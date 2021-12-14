@@ -26,21 +26,19 @@ http_access deny manager
 # allow link-local prefix
 acl localnet src 169.254.0.0/16     # RFC 3927 link-local (directly plugged) machines
 
-# ACL allow/deny configuration depends on MCC cluster type
+# Separate ACL configuration per MCC cluster
 {% for vlan in network_configuration.routers.value[inventory_hostname].vlans %}
 
 {% set v_subnet = vlan.subnet ~ '/' ~ vlan.mask%}
 {% set acl_name = 'vlan_' ~ vlan.vlan_id %}
-{% set acl_rule = 'deny' %}
 {% if vlan.mcc_regional == true %}
 {% set acl_name = acl_name ~ '_mcc_regional'%}
-{% set acl_rule = 'allow' %}
 {% else %}
 {% set acl_name = acl_name ~ '_mcc_managed'%}
 {% endif %}
 
 acl {{ acl_name }} src {{ v_subnet | ansible.netcommon.ipaddr('network/prefix') }}
-http_access {{ acl_rule }}  {{ acl_name }}
+http_access allow {{ acl_name }}
 
 {% endfor %}
 
