@@ -7,6 +7,6 @@
 terraform.tfvars*
 
 # temp credentials and configurations for equinix vlan infra
-*ansible-hosts*
+*ansible-inventory*
 output.json
 *ssh_key*
