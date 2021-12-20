@@ -63,7 +63,7 @@ resources are created:
      for all machines in scope of inter-VLAN operations, both for the edge
      router and bootstrap node. By default, the bootstrap node will have
      connectivity to all created VLANs through the edge router.
-   * `ansible-hosts.ini` - contains credentials to access the created nodes.
+   * `ansible-inventory.yaml` - contains credentials to access the created nodes.
 
 4. Run the following Ansible playbook that reconciles network configuration
    for the edge router, bootstrap node packages, and network management:
@@ -76,7 +76,7 @@ resources are created:
 
 5. Log in to the bootstrap node using the `ubuntu` user name and your specified
    SSH private key. Credentials and endpoints are located in
-   `ansible-hosts.ini`.
+   `ansible-inventory.yaml`.
 
 6. Bootstrap Container Cloud:
 

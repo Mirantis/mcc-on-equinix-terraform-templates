@@ -263,24 +263,35 @@ output "routers" {
 # Output management ##########################################
 
 locals {
-  inventory_file = "ansible-hosts.ini"
+  inventory_file = "ansible-inventory.yaml"
+
+  inventory_meta = {
+    routers = {
+      hosts = {
+        for router in local.routers :
+        (router.public_addr) => {}
+      }
+    }
+
+    seed = {
+      hosts = {
+        for device in metal_device.seed :
+        (device.access_public_ipv4) => {}
+      }
+    }
+
+    all = {
+      vars = {
+        ansible_ssh_private_key_file = abspath(var.ssh_private_key_path)
+        ansible_ssh_public_key_file  = abspath(var.ssh_public_key_path)
+        ansible_user                 = "root"
+        ansible_ssh_common_args      = "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+      }
+    }
+  }
 }
 
 resource "local_file" "ansible-inventory" {
   filename = var.ansible_artifacts_dir != "" ? "${var.ansible_artifacts_dir}/${local.inventory_file}" : local.inventory_file
-  content  = <<EOT
-[routers]
-%{for router in local.routers~}
-    ${router.public_addr}
-%{endfor~}
-[seed]
-%{for seed in local.seed_nodes~}
-    ${seed.public_addr}
-%{endfor~}
-[all:vars]
-ansible_ssh_private_key_file = ${abspath(var.ssh_private_key_path)}
-ansible_ssh_public_key_file  = ${abspath(var.ssh_public_key_path)}
-ansible_user                 = root
-ansible_ssh_common_args      = '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
-EOT
+  content  = yamlencode(local.inventory_meta)
 }
