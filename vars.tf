@@ -105,7 +105,7 @@ variable "edge_hostname" {
   type = string
 
   validation {
-    condition     = length(var.edge_hostname) > 4
+    condition     = length(var.edge_hostname) > 3
     error_message = "Variable edge_hostname should be human readable and contain at least 4 characters."
   }
 }
