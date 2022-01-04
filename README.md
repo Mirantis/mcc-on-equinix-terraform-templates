@@ -87,9 +87,9 @@ resources are created:
    5. [Finalize the bootstrap](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/qs-equinixv2/finalize-bootstrap.html).
 
 7. When the bootstrap completes, adjust the `routers_dhcp` value
-   in `metros` terraform variable input with list of IP address(es)
+   in the `metros` Terraform variable input with the list of IP address(es)
    of the Ironic DHCP endpoint(s) placed in the management/regional cluster
-   and re-run terraform, ansible playbook:
+   and re-run the following commands:
 
    ```bash
    terraform plan
@@ -99,15 +99,15 @@ resources are created:
    ansible-playbook ansible/private_mcc_infra.yaml
    ```
 
-   To obtain ip addresses itself from the management/regional cluster:
+   To obtain IP addresses themselves from the management/regional cluster:
 
    ```bash
    kubectl --kubeconfig kubeconfig.yaml get machines -o yaml | grep privateIp
    ```
 
 8. Optional. Delete the bootstrap node after a successful Container Cloud
-   management/regional bootstrap. Keep the `vlans_amount` as is
-   but set `deploy_seed` to `false` for related `metro` in `terraform.tfvars`:
+   management/regional bootstrap. Keep `vlans_amount` as is but set
+   `deploy_seed` to `false` for the related `metro` in `terraform.tfvars`:
 
    ```bash
    terraform plan
