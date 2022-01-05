@@ -81,10 +81,10 @@ resources are created:
 6. Bootstrap Container Cloud:
 
    1. [Download and run the Container Cloud bootstrap script](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/dwnld-bootstrap-script.html).
-   2. [Obtain the Mirantis license](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/qs-equinixv2/obtain-license.html).
-   3. [Verify the capacity of the Equinix Metal facility](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/qs-equinixv2/verify-capacity.html).
-   4. [Prepare the Equinix Metal configuration](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/qs-equinixv2/conf-cluster-machines.html).
-   5. [Finalize the bootstrap](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/qs-equinixv2/finalize-bootstrap.html).
+   2. [Obtain the Mirantis license](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/obtain-license.html).
+   3. [Verify the capacity of the Equinix Metal facility](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/verify-capacity.html).
+   4. [Prepare the Equinix Metal configuration](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/conf-cluster-machines.html).
+   5. [Finalize the bootstrap](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/finalize-bootstrap.html).
 
 7. When the bootstrap completes, adjust the `routers_dhcp` value
    in the `metros` Terraform variable input with the list of IP address(es)
