@@ -1,3 +1,9 @@
+# Configure the Equinix Metal Provider.
+provider "metal" {
+    max_retries = 3
+    max_retry_wait_seconds = 30
+}
+
 # SSH Keys management ##########################################
 
 # Create SSH Keys if they are not exist
