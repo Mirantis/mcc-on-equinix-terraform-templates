@@ -11,7 +11,7 @@
 
 - name: Add Docker APT repository
   apt_repository:
-    repo: deb https://download.docker.com/linux/ubuntu xenial stable
+    repo: "deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release | lower }} stable"
     state: present
     filename: 'docker'
 
