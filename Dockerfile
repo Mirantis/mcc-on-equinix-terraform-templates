@@ -25,7 +25,10 @@ RUN apk --update --no-cache add \
         git \
         bash \
         wget \
-        make
+        make \
+        libc-dev \
+        gcc \
+        python3-dev
 
 # ansible/tf
 RUN pip3 install ansible==${ANSIBLE_VERSION} ansible-lint==${ANSIBLE_LINT_VERSION} && \
