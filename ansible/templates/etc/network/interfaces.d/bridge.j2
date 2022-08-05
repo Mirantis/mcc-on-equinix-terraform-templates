@@ -1,7 +1,9 @@
+{% if network_configuration.seed_nodes.value[inventory_hostname].is_router != true %}
 # sub iface for vlan connectivity
 auto {{ seed_initial_bond_name }}.{{ network_configuration.seed_nodes.value[inventory_hostname].vlan_id }}
 iface {{ seed_initial_bond_name }}.{{ network_configuration.seed_nodes.value[inventory_hostname].vlan_id }} inet manual
 
+{% endif %}
 auto br0
 iface br0 inet static
     address {{ network_configuration.seed_nodes.value[inventory_hostname].addr }}

@@ -1,0 +1,12 @@
+---
+- name: Remove br0 bridge
+  shell: ip link delete dev br0
+  notify:
+    - restart networking
+
+- name: Ensure bridge configuration is removed
+  file:
+    state: absent
+    path: /etc/network/interfaces.d/bridge.cfg
+  notify:
+    - restart networking

@@ -12,5 +12,5 @@
   gather_facts: yes
   become: yes
   roles:
-    - role: mcc_seed
     - role: docker
+    - role: mcc_seed

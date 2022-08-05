@@ -1,0 +1,20 @@
+---
+- name: Install iptables-persistent
+  apt:
+    update_cache: yes
+    name: iptables-persistent
+    state: present
+
+- name: Check if iptables rule for DOCKER-USER already exists
+  shell: iptables -D DOCKER-USER -j ACCEPT
+  register: iptables_rule_check
+  ignore_errors: true
+
+- name: Modify iptables to accept traffic for DOCKER-USER chain
+  shell: iptables -I DOCKER-USER -j ACCEPT
+  when: iptables_rule_check is failed
+
+- name: Save iptables to recover it after the reboot
+  shell: iptables-save > /etc/iptables/rules.v4
+  notify:
+    - restart isc-dhcp-relay

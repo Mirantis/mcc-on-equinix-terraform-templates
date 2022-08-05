@@ -51,6 +51,7 @@ locals {
     for i, m in var.metros :
     (m.metro) => {
       metro             = m.metro
+      run_as_seed       = m.router_as_seed != null ? m.router_as_seed : false
       dhcp_addrs        = (m.routers_dhcp != null) ? m.routers_dhcp : []
       vlan_subnet       = "192.168.${i * 16}.0/20"
       vxlan_br_addr     = "192.168.255.${i + 1}"
@@ -93,8 +94,10 @@ locals {
         subnet      = "192.168.${i * 16 + j}.0",
         mask        = "255.255.255.0",
         router_addr = "192.168.${i * 16 + j}.1",
-        # choose first vlan as mgmt/regional scoped if seed node deployed
-        mcc_regional = (j == 0) && mi.deploy_seed ? true : false
+        # choose first vlan as mgmt/regional scoped if seed node deployed or
+        # or router should act like a seed node
+        mcc_regional = (j == 0) && ((mi.deploy_seed == null ? false : mi.deploy_seed) ||
+          (mi.router_as_seed == null ? false : mi.router_as_seed)) ? true : false
       }
   ] }
 
@@ -171,7 +174,7 @@ locals {
         subnet   = "192.168.0.0/16"
         next_hop = local.vlans[m.metro][0].router_addr
       }
-    } if m.deploy_seed
+    } if m.deploy_seed == null ? false : m.deploy_seed
   }
 }
 
@@ -197,19 +200,6 @@ resource "metal_device" "seed" {
   }
 }
 
-locals {
-  seed_nodes = {
-    for device in metal_device.seed :
-    (device.access_public_ipv4) => {
-      metro        = local.seed_nodes_meta[device.metro].metro
-      addr         = local.seed_nodes_meta[device.metro].addr
-      mask         = local.seed_nodes_meta[device.metro].mask
-      vlan_id      = local.seed_nodes_meta[device.metro].vlan_id
-      static_route = local.seed_nodes_meta[device.metro].static_route
-      public_addr  = device.access_public_ipv4
-  } }
-}
-
 # Change network mode to hybrid for the seed instance
 resource "metal_device_network_type" "seed_network" {
   for_each = metal_device.seed
@@ -230,10 +220,6 @@ resource "metal_port_vlan_attachment" "vlan_to_seed" {
   vlan_vnid = local.vlans[each.key][0].vlan_id
 }
 
-output "seed_nodes" {
-  value = local.seed_nodes
-}
-
 # Output management ##########################################
 
 locals {
@@ -245,6 +231,7 @@ locals {
       vxlan_subnet_mask = router.vxlan_subnet_mask
       private_addr      = router.private_addr
       public_addr       = router.public_addr
+      run_as_seed       = router.run_as_seed
       dhcp_addrs        = router.dhcp_addrs
       vlans = [
         for vlan in local.vlans[name] : {
@@ -264,8 +251,39 @@ locals {
   } }
 }
 
+locals {
+  seed_nodes = merge({
+  for device in metal_device.seed :
+  (device.access_public_ipv4) => {
+    metro        = local.seed_nodes_meta[device.metro].metro
+    addr         = local.seed_nodes_meta[device.metro].addr
+    mask         = local.seed_nodes_meta[device.metro].mask
+    vlan_id      = local.seed_nodes_meta[device.metro].vlan_id
+    static_route = local.seed_nodes_meta[device.metro].static_route
+    public_addr  = device.access_public_ipv4
+    is_router    = false
+  } }, {
+  for name, router in local.routers :
+  (router.public_addr) => {
+    metro        = router.metro
+    addr         = router.vlans[0].router_addr
+    mask         = router.vlans[0].mask
+    vlan_id      = router.vlans[0].vlan_id
+    static_route = {
+      subnet   = join("/", [router.vlans[0].subnet, "24"])
+      next_hop = router.vlans[0].router_addr
+    }
+    public_addr  = router.public_addr
+    is_router    = true
+  } if router.run_as_seed })
+}
+
 output "routers" {
   value = local.routers
+}
+
+output "seed_nodes" {
+  value = local.seed_nodes
 }
 
 # Output management ##########################################
@@ -285,8 +303,10 @@ locals {
 
     seed = {
       hosts = {
-        for device in metal_device.seed :
-        (device.access_public_ipv4) => {}
+        for device in local.seed_nodes :
+        (device.public_addr) => {
+          is_router = device.is_router
+        }
       }
     }
 

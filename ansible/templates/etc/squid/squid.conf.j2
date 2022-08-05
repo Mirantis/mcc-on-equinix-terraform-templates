@@ -26,6 +26,12 @@ http_access deny manager
 # allow link-local prefix
 acl localnet src 169.254.0.0/16     # RFC 3927 link-local (directly plugged) machines
 
+# allow kind network
+{% if network_configuration.routers.value[inventory_hostname].run_as_seed %}
+acl kind_network src {{ kind_network }}
+http_access allow kind_network
+{% endif %}
+
 # Separate ACL configuration per MCC cluster
 {% for vlan in network_configuration.routers.value[inventory_hostname].vlans %}
 

@@ -1,2 +1,4 @@
 ---
 - import_tasks: roles/common/handlers/main.yaml
+
+- import_tasks: roles/dhcp_relay/handlers/main.yaml

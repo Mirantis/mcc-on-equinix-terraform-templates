@@ -18,10 +18,12 @@ variable "edge_size" {
 
 variable "metros" {
   type = list(object({
-    metro        = string
-    vlans_amount = number
-    deploy_seed  = bool
-    routers_dhcp = optional(list(string))
+    metro          = string
+    vlans_amount   = number
+    # TODO(eromanova): define defaults for deploy_seed and router_as_seed variables once terraform 1.3 available
+    deploy_seed    = optional(bool)
+    router_as_seed = optional(bool)
+    routers_dhcp   = optional(list(string))
   }))
 
   description = <<EOT
@@ -35,7 +37,10 @@ example of object:
   {
     "metro": "da",
     "vlans_amount": "1",
-    "deploy_seed": true,
+    "deploy_seed": false,
+    # router_as_seed defines if the router should be deployed as a seed node.
+    # `deploy_seed` and `router_as_seed` should not be enabled at once.
+    "router_as_seed: true,
     # routers_dhcp field is optional and may be filled after MCC bootstrap
     "routers_dhcp": [
         "192.168.16.21",
@@ -52,6 +57,14 @@ EOT
     ])
     error_message = "Metro should be specified explicitly and vlans_amount >0 and <16."
   }
+
+  # TODO(eromanova): uncomment validation once terraform 1.3 is available and defaults for deploy_seed and router_as_seed are set
+  # validation {
+    # condition = alltrue([
+      # for o in var.metros : !(o.deploy_seed && o.router_as_seed)
+    # ])
+    # error_message = "Invalid Metro configuration: deploy_seed and router_as_seed should not be enabled at once. Choose only one option."
+  # }
 
 }
 

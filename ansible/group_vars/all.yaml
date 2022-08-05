@@ -38,7 +38,7 @@ config_chrony_template: etc/chrony/chrony.conf.j2
 
 # Seed node configuration
 seed_username: "ubuntu"
-### initial bond iface name in the seed node needeed to build bridge
+### initial bond iface name in the seed node needed to build bridge
 seed_initial_bond_name: bond0
 config_seed_interfaces_template: etc/network/interfaces.d/bridge.j2
 # default equinix nameservers to be set during bridge initialization
@@ -47,3 +47,4 @@ seed_bridge_nameservers: "147.75.207.208 147.75.207.207"
 ## Seed node docker configuration
 seed_docker_daemon_template: etc/docker/daemon.json.j2
 seed_docker_bip: "172.17.0.1/16"
+kind_network: "172.18.0.1/16"

@@ -1,6 +1,13 @@
 ---
 - import_tasks: ../common/tasks/main.yaml
 
+# Considering management/regional cluster is already deployed when DHCP servers are defined
+# to remove all seed node infrastructure which blocks all incoming traffic to the router:
+# https://docs.docker.com/network/iptables/
+- name: Check if the bootstrap was finished
+  set_fact:
+    bootstrap_finished: '{{ dhcp_servers | length  > 0 }}'
+
 - name: Configuring Bridge based at vlan iface
   template:
     src: "{{ config_seed_interfaces_template }}"
@@ -9,10 +16,26 @@
     group: root
     mode: 0644
   become: true
+  when: not is_router or (is_router and not bootstrap_finished)
   notify:
   - restart networking
 
-- name: Make sure that networking was restarted after initial bridge config setup
+- name: Check if br0 bridge exists
+  shell: brctl show br0
+  register: bridge_exists
+  ignore_errors: true
+  when: is_router and bootstrap_finished
+
+- name: Remove br0 bridge
+  include_tasks: remove_bridge.yaml
+  when: is_router and bootstrap_finished and bridge_exists is not failed
+
+# See https://docs.docker.com/network/iptables/#docker-on-a-router
+- name: Configure iptables
+  include_tasks: configure_iptables.yaml
+  when: is_router and bootstrap_finished
+
+- name: Make sure that networking and isc-dhcp-relay were restarted
   meta: flush_handlers
 
 - name: Create seed user
