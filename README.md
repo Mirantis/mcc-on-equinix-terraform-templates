@@ -42,9 +42,12 @@ resources are created:
    variables declared in `vars.tf`.
 
    * Specify the amount of VLANs required for Container Cloud as `vlans_amount`
-     in each `metro`. If `deploy_seed` is set to `true`,
+     in each `metro`. If `deploy_seed` or `router_as_seed` is set to `true`,
      one of VLANs will be automatically scoped as the management/regional one,
      and the bootstrap node will be placed on that VLAN.
+   * If `router_as_seed` is set to `true`, a separate seed node will not be
+     created. Instead, the router will be configured as a seed node. You will
+     need to use the router to bootstrap Container Cloud.
    * Use the `terraform plan` command to output help messages for each required
      variable.
 
@@ -74,7 +77,8 @@ resources are created:
    ansible-playbook ansible/private_mcc_infra.yaml -vvv
    ```
 
-5. Log in to the bootstrap node using the `ubuntu` user name and your specified
+5. Log in to the seed node or to the router (if `router_as_seed` was set to
+   `true`) using the `ubuntu` user name and your specified
    SSH private key. Credentials and endpoints are located in
    `ansible-inventory.yaml`.
 
@@ -105,9 +109,10 @@ resources are created:
    kubectl --kubeconfig kubeconfig.yaml get machines -o yaml | grep privateIp
    ```
 
-8. Optional. Delete the bootstrap node after a successful Container Cloud
-   management/regional bootstrap. Keep `vlans_amount` as is but set
-   `deploy_seed` to `false` for the related `metro` in `terraform.tfvars`:
+8. Optional. If the seed node was used for deployment, you may delete it
+   after a successful Container Cloud management/regional bootstrap. Keep
+   `vlans_amount` as is but set `deploy_seed` to `false` for the related
+   `metro` in `terraform.tfvars`:
 
    ```bash
    terraform plan
