@@ -57,11 +57,11 @@ EOT
 
 variable "edge_os" {
   type    = string
-  default = "ubuntu_18_04"
+  default = "ubuntu_20_04"
 
   validation {
-    condition     = var.edge_os == "ubuntu_18_04"
-    error_message = "Current ifrastructure setup supports following OS: [ubuntu_18_04]."
+    condition     = var.edge_os == "ubuntu_20_04"
+    error_message = "Current ifrastructure setup supports following OS: [ubuntu_20_04]."
   }
 }
 
