@@ -18,12 +18,16 @@ variable "edge_size" {
 
 variable "metros" {
   type = list(object({
-    metro          = string
-    vlans_amount   = number
+    reserved_hardware = optional(list(object({
+      id   = string
+      plan = string
+    })))
+    metro             = string
+    vlans_amount      = number
     # TODO(eromanova): define defaults for deploy_seed and router_as_seed variables once terraform 1.3 available
-    deploy_seed    = optional(bool)
-    router_as_seed = optional(bool)
-    routers_dhcp   = optional(list(string))
+    deploy_seed       = optional(bool)
+    router_as_seed    = optional(bool)
+    routers_dhcp      = optional(list(string))
   }))
 
   description = <<EOT
@@ -32,6 +36,22 @@ example of object:
   {
     "metro": "fr",
     "vlans_amount": "2",
+    # [tech preview] reserved_hardware field is optional and may be filled if it is needed to
+    # deploy routers or seed nodes from the reserved hardware instead of `on demand`
+    # deployment. If the number of reserved items is less than the total count of routers
+    # and seed nodes in particular metro then remaining servers will be deployed on demand.
+    # Note, that the reserved servers are metro-scoped and you should specify reserved IDs
+    # from the chosen metro only. It is also required to specify plan for the particular reservation.
+    "reserved_hardware": [
+        {
+            "id": "a5bfe903-c4cb-47e6-b321-b56d16be51f7",
+            "plan": "n2.medium.x86"
+        },
+        {
+            "id": "1269e7ab-dd60-4b49-8ae3-b0c9d49dce5c",
+            "plan": "c3.small.x86"
+        }
+    ],
     "deploy_seed": true,
   },
   {
@@ -66,6 +86,15 @@ EOT
     # error_message = "Invalid Metro configuration: deploy_seed and router_as_seed should not be enabled at once. Choose only one option."
   # }
 
+  # validation {
+  #  condition = alltrue([
+  #    flatten([
+  #      for o in var.metros : [
+  #        for r in o.reserved_hardware : r.id != "" && r.plan != ""
+  #      ]])
+  #  ])
+  #  error_message = "Both ID and plan should be specified for the reserved hardware."
+  #}
 }
 
 variable "edge_os" {

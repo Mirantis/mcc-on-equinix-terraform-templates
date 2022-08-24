@@ -25,17 +25,29 @@ data "metal_project_ssh_key" "infra_ssh" {
 
 # Routers management ##########################################
 
+locals {
+  # The first hardware reservation (if set) will always be selected for the router
+  routers_custom_spec = {
+    for i, m in var.metros :
+      (m.metro) => {
+        plan     = length(m.reserved_hardware != null ? m.reserved_hardware : []) > 0 ? m.reserved_hardware[0].plan : var.edge_size
+        hardware_reservation_id = length(m.reserved_hardware != null ? m.reserved_hardware : []) > 0 ? m.reserved_hardware[0].id : ""
+      }
+  }
+}
+
 # Create routers in each configured metro
 resource "metal_device" "edge" {
-  count = length(var.metros)
+  count = length(local.routers_custom_spec)
 
-  hostname            = "mcc-edge-router-${var.edge_hostname}"
-  plan                = var.edge_size
-  metro               = var.metros[count.index].metro
-  operating_system    = var.edge_os
-  billing_cycle       = var.billing_cycle
-  project_id          = var.project_id
-  project_ssh_key_ids = [data.metal_project_ssh_key.infra_ssh.id]
+  hostname                = "mcc-edge-router-${var.edge_hostname}"
+  plan                    = local.routers_custom_spec[var.metros[count.index].metro].plan
+  hardware_reservation_id = local.routers_custom_spec[var.metros[count.index].metro].hardware_reservation_id
+  metro                   = var.metros[count.index].metro
+  operating_system        = var.edge_os
+  billing_cycle           = var.billing_cycle
+  project_id              = var.project_id
+  project_ssh_key_ids     = [data.metal_project_ssh_key.infra_ssh.id]
 }
 
 # Change network mode to hybrid for the edge instance
@@ -166,10 +178,12 @@ locals {
   seed_nodes_meta = {
     for m in var.metros :
     (m.metro) => {
-      addr    = cidrhost("${local.vlans[m.metro][0].subnet}/24", 2)
-      mask    = local.vlans[m.metro][0].mask
-      vlan_id = local.vlans[m.metro][0].vlan_id
-      metro   = m.metro
+      addr                    = cidrhost("${local.vlans[m.metro][0].subnet}/24", 2)
+      mask                    = local.vlans[m.metro][0].mask
+      vlan_id                 = local.vlans[m.metro][0].vlan_id
+      metro                   = m.metro
+      plan                    = length(m.reserved_hardware != null ? m.reserved_hardware : []) > 1 ? m.reserved_hardware[1].plan : var.edge_size
+      hardware_reservation_id = length(m.reserved_hardware != null ? m.reserved_hardware : []) > 1 ? m.reserved_hardware[1].id : ""
       static_route = {
         subnet   = "192.168.0.0/16"
         next_hop = local.vlans[m.metro][0].router_addr
@@ -181,13 +195,14 @@ locals {
 resource "metal_device" "seed" {
   for_each = local.seed_nodes_meta
 
-  hostname            = "mcc-seed-${var.edge_hostname}"
-  plan                = var.edge_size
-  metro               = each.key
-  operating_system    = var.edge_os
-  billing_cycle       = var.billing_cycle
-  project_id          = var.project_id
-  project_ssh_key_ids = [data.metal_project_ssh_key.infra_ssh.id]
+  hostname                = "mcc-seed-${var.edge_hostname}"
+  plan                    = each.value["plan"]
+  hardware_reservation_id = each.value["hardware_reservation_id"]
+  metro                   = each.key
+  operating_system        = var.edge_os
+  billing_cycle           = var.billing_cycle
+  project_id              = var.project_id
+  project_ssh_key_ids     = [data.metal_project_ssh_key.infra_ssh.id]
 
   # keep only ipv4 addresses, skipping ipv6 management
   ip_address {
