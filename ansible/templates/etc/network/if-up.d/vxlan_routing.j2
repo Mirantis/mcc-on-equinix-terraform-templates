@@ -1,0 +1,5 @@
+#!/bin/sh
+
+{% for vxlan in network_configuration.routers.value[inventory_hostname].vxlans %}
+route add -net {{ vxlan.remote_subnet }} gw {{ vxlan.next_hop }} dev {{ br_vxlan }} || true
+{% endfor %}

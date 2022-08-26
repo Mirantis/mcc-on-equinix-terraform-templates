@@ -3,11 +3,15 @@
   apt:
     update_cache: yes
 
-- name: Make sure interfaces.d included in common configuration
+- name: Make sure interfaces.d included in common configuration in proper order
   become: yes
-  lineinfile:
+  blockinfile:
     path: /etc/network/interfaces
-    line: "source /etc/network/interfaces.d/*.cfg"
+    block: |
+      source {{ config_vlan_interfaces }}
+      source {{ config_vxlan_interfaces }}
+      source {{ config_vxlan_bridge }}
+      source {{ config_seed_interfaces }}
     state: present
   notify:
   - restart networking

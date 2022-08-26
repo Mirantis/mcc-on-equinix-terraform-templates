@@ -11,7 +11,7 @@
 - name: Configuring Bridge based at vlan iface
   template:
     src: "{{ config_seed_interfaces_template }}"
-    dest: /etc/network/interfaces.d/bridge.cfg
+    dest: "{{ config_seed_interfaces }}"
     owner: root
     group: root
     mode: 0644

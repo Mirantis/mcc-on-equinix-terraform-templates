@@ -7,6 +7,6 @@
 - name: Ensure bridge configuration is removed
   file:
     state: absent
-    path: /etc/network/interfaces.d/bridge.cfg
+    path: "{{ config_seed_interfaces }}"
   notify:
     - restart networking

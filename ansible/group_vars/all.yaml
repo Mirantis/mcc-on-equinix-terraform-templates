@@ -7,6 +7,7 @@ network_config_path: ../output.json
 ## VLAN configuration
 ### default files for edge router iface/packet forwarding config
 config_vlan_interfaces_template: etc/network/interfaces.d/vlans.j2
+config_vlan_interfaces: /etc/network/interfaces.d/vlans.cfg
 config_sysctl_template: etc/sysctl.conf.j2
 
 ### initial bond iface name, created at the Equinix instance running as edge router
@@ -18,7 +19,11 @@ initial_bond_name: bond0
 br_vxlan: br_vxlan
 ### default template files for LxLAN vtep interfaces and bridge on edge router
 config_vxlan_interfaces_template: etc/network/interfaces.d/vxlans.j2
+config_vxlan_interfaces: /etc/network/interfaces.d/vxlans.cfg
 config_vxlan_bridge_template: etc/network/interfaces.d/vxlan_bridge.j2
+config_vxlan_bridge: /etc/network/interfaces.d/vxlan_bridge.cfg
+config_vxlan_routing_template: etc/network/if-up.d/vxlan_routing.j2
+config_vxlan_routing: /etc/network/if-up.d/vxlan_routing
 
 ## DHCP relay configuration
 config_dhcp_relay_template: etc/default/isc-dhcp-relay.j2
@@ -41,6 +46,7 @@ seed_username: "ubuntu"
 ### initial bond iface name in the seed node needed to build bridge
 seed_initial_bond_name: bond0
 config_seed_interfaces_template: etc/network/interfaces.d/bridge.j2
+config_seed_interfaces: /etc/network/interfaces.d/bridge.cfg
 # default equinix nameservers to be set during bridge initialization
 seed_bridge_nameservers: "147.75.207.208 147.75.207.207"
 

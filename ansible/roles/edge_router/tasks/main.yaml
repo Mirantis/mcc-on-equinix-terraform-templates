@@ -4,7 +4,7 @@
 - name: Configuring Vlan Interfaces
   template:
     src: "{{ config_vlan_interfaces_template }}"
-    dest: /etc/network/interfaces.d/vlans.cfg
+    dest: "{{ config_vlan_interfaces }}"
     owner: root
     group: root
     mode: 0644
@@ -13,7 +13,7 @@
 - name: Configuring VxLAN Interfaces
   template:
     src: "{{ config_vxlan_interfaces_template }}"
-    dest: /etc/network/interfaces.d/vxlans.cfg
+    dest: "{{ config_vxlan_interfaces }}"
     owner: root
     group: root
     mode: 0644
@@ -24,10 +24,21 @@
 - name: Configuring VxLAN Bridge
   template:
     src: "{{ config_vxlan_bridge_template }}"
-    dest: /etc/network/interfaces.d/vxlan_bridge.cfg
+    dest: "{{ config_vxlan_bridge }}"
     owner: root
     group: root
     mode: 0644
+  become: true
+  notify:
+    - restart networking
+
+- name: Configure VxLAN routing
+  template:
+    src: "{{ config_vxlan_routing_template }}"
+    dest: "{{ config_vxlan_routing }}"
+    owner: root
+    group: root
+    mode: 0744
   become: true
   notify:
     - restart networking

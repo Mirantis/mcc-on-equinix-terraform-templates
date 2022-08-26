@@ -7,8 +7,6 @@ iface vxlan.{{ vxlan.vnid }} inet manual
     up ip link set $IFACE up
     down ip link set $IFACE down
     post-down ip link del $IFACE || true
-    up route add -net {{ vxlan.remote_subnet }} gw {{ vxlan.next_hop }} dev {{ br_vxlan }}
-
 
 {% endfor %}
 ######### End of Network VLANS
