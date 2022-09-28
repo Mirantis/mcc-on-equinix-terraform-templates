@@ -12,7 +12,13 @@ resources are created:
 
 ## To set up Container Cloud on Equinix Metal with private networking
 
-1. Generate an SSH key to access the edge router and bootstrap node:
+1. Verify that the following packages are installed:
+
+   * `terraform` >=v0.15.0
+   * `ansible-playbook` >=2.12.12
+   * `ansible-lint` >=5.2.0
+
+2. Generate an SSH key to access the edge router and bootstrap node:
 
    ```bash
    ssh-keygen -f ssh_key -t ecdsa -b 521
@@ -22,7 +28,7 @@ resources are created:
    provide paths for private and public parts of the key in the
    `ssh_private_key_path` and `ssh_public_key_path` variables respectively.
 
-2. Optional. To reuse the Equinix key object for other deployments, create and
+3. Optional. To reuse the Equinix key object for other deployments, create and
    apply the Equinix Metal `project SSH key`, for example,
    named `mcc_infra_access`:
 
@@ -38,7 +44,7 @@ resources are created:
    Note that `ssh_private_key_path` and `ssh_public_key_path` should
    match metadata declared in the "Project SSH key" object.
 
-3. Create the `terraform.tfvars` file with all required
+4. Create the `terraform.tfvars` file with all required
    variables declared in `vars.tf`.
 
    * Specify the amount of VLANs required for Container Cloud as `vlans_amount`
@@ -68,7 +74,7 @@ resources are created:
      connectivity to all created VLANs through the edge router.
    * `ansible-inventory.yaml` - contains credentials to access the created nodes.
 
-4. Run the following Ansible playbook that reconciles network configuration
+5. Run the following Ansible playbook that reconciles network configuration
    for the edge router, bootstrap node packages, and network management:
 
    ```bash
@@ -77,12 +83,12 @@ resources are created:
    ansible-playbook ansible/private_mcc_infra.yaml -vvv
    ```
 
-5. Log in to the seed node or to the router (if `router_as_seed` was set to
+6. Log in to the seed node or to the router (if `router_as_seed` was set to
    `true`) using the `ubuntu` user name and your specified
    SSH private key. Credentials and endpoints are located in
    `ansible-inventory.yaml`.
 
-6. Bootstrap Container Cloud:
+7. Bootstrap Container Cloud:
 
    1. [Download and run the Container Cloud bootstrap script](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/dwnld-bootstrap-script.html).
    2. [Obtain the Mirantis license](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/obtain-license.html).
@@ -90,7 +96,7 @@ resources are created:
    4. [Prepare the Equinix Metal configuration](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/conf-cluster-machines.html).
    5. [Finalize the bootstrap](https://docs.mirantis.com/container-cloud/latest/qs-equinixv2/finalize-bootstrap.html).
 
-7. When the bootstrap completes, adjust the `routers_dhcp` value
+8. When the bootstrap completes, adjust the `routers_dhcp` value
    in the `metros` Terraform variable input with the list of IP address(es)
    of the Ironic DHCP endpoint(s) placed in the management/regional cluster
    and re-run the following commands:
@@ -109,7 +115,7 @@ resources are created:
    kubectl --kubeconfig kubeconfig.yaml get machines -o yaml | grep privateIp
    ```
 
-8. Optional. If the seed node was used for deployment, you may delete it
+9. Optional. If the seed node was used for deployment, you may delete it
    after a successful Container Cloud management/regional bootstrap. Keep
    `vlans_amount` as is but set `deploy_seed` to `false` for the related
    `metro` in `terraform.tfvars`:
@@ -120,9 +126,9 @@ resources are created:
    terraform output -json > output.json
    ```
 
-9. Optional. If you delete the Container Cloud cluster, delete the
-   Terraform template:
+10. Optional. If you delete the Container Cloud cluster, delete the
+    Terraform template:
 
-   ```bash
-   terraform destroy
-   ```
+    ```bash
+    terraform destroy
+    ```
