@@ -33,7 +33,7 @@
 # See https://docs.docker.com/network/iptables/#docker-on-a-router
 - name: Configure iptables
   include_tasks: configure_iptables.yaml
-  when: is_router and bootstrap_finished
+  when: is_router
 
 - name: Make sure that networking and isc-dhcp-relay were restarted
   meta: flush_handlers
