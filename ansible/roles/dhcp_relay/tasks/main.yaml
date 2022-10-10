@@ -1,18 +1,18 @@
 ---
 - name: Installing ISC-DHCP-Relay
-  apt:
+  ansible.builtin.apt:
     name: "isc-dhcp-relay"
     state: "present"
 
 - name: Configuring ISC-DHCP-Relay
-  template:
+  ansible.builtin.template:
     src: "{{ config_dhcp_relay_template }}"
     dest: /etc/default/isc-dhcp-relay
     mode: 0644
   notify:
-    - restart isc-dhcp-relay
+    - Restart isc-dhcp-relay
 
 - name: Ensure dhcp relay is running
-  service:
+  ansible.builtin.service:
     name: isc-dhcp-relay
     state: started

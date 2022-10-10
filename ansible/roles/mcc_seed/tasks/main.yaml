@@ -5,11 +5,11 @@
 # to remove all seed node infrastructure which blocks all incoming traffic to the router:
 # https://docs.docker.com/network/iptables/
 - name: Check if the bootstrap was finished
-  set_fact:
-    bootstrap_finished: '{{ dhcp_servers | length  > 0 }}'
+  ansible.builtin.set_fact:
+    bootstrap_finished: '{{ dhcp_servers | length > 0 }}'
 
 - name: Configuring Bridge based at vlan iface
-  template:
+  ansible.builtin.template:
     src: "{{ config_seed_interfaces_template }}"
     dest: "{{ config_seed_interfaces }}"
     owner: root
@@ -18,10 +18,10 @@
   become: true
   when: not is_router or (is_router and not bootstrap_finished)
   notify:
-  - restart networking
+    - Restart networking
 
 - name: Check if br0 bridge exists
-  shell: brctl show br0
+  ansible.builtin.command: brctl show br0
   register: bridge_exists
   ignore_errors: true
   when: is_router and bootstrap_finished
@@ -36,7 +36,7 @@
   when: is_router
 
 - name: Make sure that networking and isc-dhcp-relay were restarted
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers
 
 - name: Create seed user
   ansible.builtin.user:
@@ -44,7 +44,7 @@
     state: present
     shell: /bin/bash
     groups: sudo
-    append: yes
+    append: true
 
 - name: Deploy SSH Public Key
   ansible.posix.authorized_key:
@@ -53,7 +53,7 @@
     key: "{{ lookup('file', '{{ ansible_ssh_public_key_file }}') }}"
 
 - name: Passwordless sudo
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/sudoers
     state: present
     regexp: '^%sudo'

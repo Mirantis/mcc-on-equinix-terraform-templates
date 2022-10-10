@@ -2,7 +2,7 @@
 - import_tasks: ../common/tasks/main.yaml
 
 - name: Configuring Vlan Interfaces
-  template:
+  ansible.builtin.template:
     src: "{{ config_vlan_interfaces_template }}"
     dest: "{{ config_vlan_interfaces }}"
     owner: root
@@ -11,7 +11,7 @@
   become: true
 
 - name: Configuring VxLAN Interfaces
-  template:
+  ansible.builtin.template:
     src: "{{ config_vxlan_interfaces_template }}"
     dest: "{{ config_vxlan_interfaces }}"
     owner: root
@@ -19,10 +19,10 @@
     mode: 0644
   become: true
   notify:
-    - restart networking
+    - Restart networking
 
 - name: Configuring VxLAN Bridge
-  template:
+  ansible.builtin.template:
     src: "{{ config_vxlan_bridge_template }}"
     dest: "{{ config_vxlan_bridge }}"
     owner: root
@@ -30,10 +30,10 @@
     mode: 0644
   become: true
   notify:
-    - restart networking
+    - Restart networking
 
 - name: Configure VxLAN routing
-  template:
+  ansible.builtin.template:
     src: "{{ config_vxlan_routing_template }}"
     dest: "{{ config_vxlan_routing }}"
     owner: root
@@ -41,10 +41,10 @@
     mode: 0744
   become: true
   notify:
-    - restart networking
+    - Restart networking
 
 - name: Make sure that networking was restarted after initial bridge config setup
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers
 
 - name: Configuring port forwarding for VxLAN Bridge
   sysctl:
@@ -52,7 +52,7 @@
     value: 1
     state: present
     sysctl_file: /etc/sysctl.conf
-    reload: yes
+    reload: true
 
 - name: Configuring port forwarding per VLAN
   sysctl:
@@ -60,5 +60,5 @@
     value: 1
     state: present
     sysctl_file: /etc/sysctl.conf
-    reload: yes
+    reload: true
   loop: "{{ network_configuration.routers.value[inventory_hostname].vlans }}"

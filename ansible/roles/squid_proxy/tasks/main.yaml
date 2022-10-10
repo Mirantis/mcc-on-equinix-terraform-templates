@@ -1,18 +1,18 @@
 ---
 - name: Installing Squid proxy
-  apt:
+  ansible.builtin.apt:
     name: "squid"
     state: "present"
 
 - name: Configuring Squid proxy
-  template:
+  ansible.builtin.template:
     src: "{{ config_squid_proxy_template }}"
     dest: /etc/squid/squid.conf
     mode: 0644
   notify:
-    - restart squid proxy
+    - Restart squid proxy
 
 - name: Ensure Squid proxy is running
-  service:
+  ansible.builtin.service:
     name: squid
     state: started

@@ -1,21 +1,21 @@
 ---
 - name: Install chrony
-  apt:
+  ansible.builtin.apt:
     name: "chrony"
     state: "present"
 
 - name: Configure chrony
-  template:
+  ansible.builtin.template:
     src: "{{ config_chrony_template }}"
     dest: /etc/chrony/chrony.conf
     owner: root
     group: root
     mode: 0644
   notify:
-  - restart chrony
+    - Restart chrony
 
 - name: Enable chrony
-  service:
+  ansible.builtin.service:
     name: chrony
     state: started
     enabled: true

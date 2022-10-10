@@ -1,5 +1,5 @@
 ---
-- name: restart squid proxy
-  service:
+- name: Restart squid proxy
+  ansible.builtin.service:
     name: squid
     state: restarted

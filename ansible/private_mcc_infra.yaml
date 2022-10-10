@@ -1,16 +1,18 @@
 ---
-- hosts: routers
-  gather_facts: yes
-  become: yes
+- name: Configure routers
+  hosts: routers
+  gather_facts: true
+  become: true
   roles:
     - role: edge_router
     - role: squid_proxy
     - role: ntp_server
     - role: dhcp_relay
       when: dhcp_servers | length  > 0
-- hosts: seed
-  gather_facts: yes
-  become: yes
+- name: Configure seed nodes
+  hosts: seed
+  gather_facts: true
+  become: true
   roles:
     - role: docker
     - role: mcc_seed
