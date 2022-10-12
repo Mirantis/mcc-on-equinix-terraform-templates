@@ -11,3 +11,4 @@
     path: "{{ config_seed_interfaces }}"
   notify:
     - Restart networking
+    - Restart isc-dhcp-relay

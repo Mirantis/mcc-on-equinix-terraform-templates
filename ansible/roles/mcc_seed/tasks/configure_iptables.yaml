@@ -6,7 +6,7 @@
     state: present
 
 - name: Check if iptables rule for DOCKER-USER already exists
-  ansible.builtin.command: iptables -D DOCKER-USER -j ACCEPT
+  ansible.builtin.command: iptables -C DOCKER-USER -j ACCEPT
   register: iptables_rule_check
   changed_when: false
   ignore_errors: true
@@ -18,5 +18,3 @@
 - name: Save iptables to recover it after the reboot
   ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4
   changed_when: false
-  notify:
-    - Restart isc-dhcp-relay

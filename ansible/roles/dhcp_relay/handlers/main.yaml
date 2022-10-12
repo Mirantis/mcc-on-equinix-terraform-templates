@@ -3,4 +3,3 @@
   ansible.builtin.service:
     name: isc-dhcp-relay
     state: restarted
-  when: ansible_facts.services['isc-dhcp-relay.service'] is defined
