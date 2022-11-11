@@ -32,6 +32,6 @@ RUN apk --update --no-cache add \
 
 # ansible/tf
 RUN pip3 install ansible==${ANSIBLE_VERSION} ansible-lint==${ANSIBLE_LINT_VERSION} && \
-	wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+        wget https://artifactory.mcp.mirantis.net:443/artifactory/binary-dev-kaas-local/core/bin/mirror/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
 	unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin && \
 	rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
