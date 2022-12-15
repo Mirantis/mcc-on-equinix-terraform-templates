@@ -1,0 +1,14 @@
+---
+- name: Get IP masquerade rule to add to the NAT table
+  ansible.builtin.set_fact:
+    masquerade_rule: "-A POSTROUTING -s {{ item.subnet }}/24 -o {{ initial_bond_name }} -j MASQUERADE"
+
+- name: Check if the IP masquerade rule for this subnet already exists
+  ansible.builtin.shell: "iptables-save | grep -- '{{ masquerade_rule }}'"
+  register: iptables_rule_check
+  changed_when: false
+  ignore_errors: true
+
+- name: Add IP masquerade rule to the NAT table
+  ansible.builtin.command: "iptables -t nat {{ masquerade_rule }}"
+  when: iptables_rule_check is failed

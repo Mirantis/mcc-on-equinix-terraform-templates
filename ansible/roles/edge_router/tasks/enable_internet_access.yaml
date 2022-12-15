@@ -1,0 +1,22 @@
+---
+- name: Enable IP forwarding
+  sysctl:
+    name: "net.ipv4.ip_forward"
+    value: 1
+    state: present
+    sysctl_file: /etc/sysctl.conf
+    reload: true
+
+- name: Ensure iptables-persistent in installed
+  ansible.builtin.apt:
+    update_cache: true
+    name: iptables-persistent
+    state: present
+
+- name: Add IP masquerade rule to the NAT table
+  include_tasks: configure_ip_masquerading.yaml
+  loop: "{{ network_configuration.routers.value[inventory_hostname].vlans }}"
+
+- name: Save iptables to recover it after the reboot
+  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4
+  changed_when: false

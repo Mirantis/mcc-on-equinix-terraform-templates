@@ -62,3 +62,7 @@
     sysctl_file: /etc/sysctl.conf
     reload: true
   loop: "{{ network_configuration.routers.value[inventory_hostname].vlans }}"
+
+- name: Configure IP masquerading
+  include_tasks: enable_internet_access.yaml
+  when: enable_internet_access

@@ -54,6 +54,13 @@ resources are created:
    * If `router_as_seed` is set to `true`, a separate seed node will not be
      created. Instead, the router will be configured as a seed node. You will
      need to use the router to bootstrap Container Cloud.
+   * Optional. To enable Internet access on all servers connected to the
+     router, set the `enable_internet_access` parameter to configure the IP
+     masquerading on the router. It is required if the Equinix regional cluster
+     with private networking is going to be deployed on a public management
+     cluster (for example, on AWS or Azure) and the public Container Cloud
+     endpoints must be accessible from machines. For details, see
+     [Equinix documentation: Combining Hybrid and Layer 2 Modes](https://deploy.equinix.com/developers/docs/metal/layer2-networking/layer2-mode/#example-combining-hybrid-and-layer-2-modes).
    * Use the `terraform plan` command to output help messages for each required
      variable.
 

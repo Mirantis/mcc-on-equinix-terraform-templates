@@ -22,12 +22,13 @@ variable "metros" {
       id   = string
       plan = string
     })))
-    metro             = string
-    vlans_amount      = number
+    metro                  = string
+    vlans_amount           = number
     # TODO(eromanova): define defaults for deploy_seed and router_as_seed variables once terraform 1.3 available
-    deploy_seed       = optional(bool)
-    router_as_seed    = optional(bool)
-    routers_dhcp      = optional(list(string))
+    deploy_seed            = optional(bool)
+    router_as_seed         = optional(bool)
+    enable_internet_access = optional(bool)
+    routers_dhcp           = optional(list(string))
   }))
 
   description = <<EOT
@@ -60,7 +61,14 @@ example of object:
     "deploy_seed": false,
     # router_as_seed defines if the router should be deployed as a seed node.
     # `deploy_seed` and `router_as_seed` should not be enabled at once.
-    "router_as_seed: true,
+    "router_as_seed": true,
+    # enable_internet_access defines whether the IP masquerading should be
+    # configured on a router. Is required if servers connected to this
+    # router should have internet access (for example, if the Equinix
+    # regional cluster with private networking is going to be deployed
+    # on a public management cluster and the public Container Cloud
+    # endpoints must be accessible from machines).
+    "enable_internet_access": false,
     # routers_dhcp field is optional and may be filled after MCC bootstrap
     "routers_dhcp": [
         "192.168.16.21",

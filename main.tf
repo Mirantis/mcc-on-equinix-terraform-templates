@@ -62,16 +62,17 @@ locals {
   routers_meta = {
     for i, m in var.metros :
     (m.metro) => {
-      metro             = m.metro
-      run_as_seed       = m.router_as_seed != null ? m.router_as_seed : false
-      dhcp_addrs        = (m.routers_dhcp != null) ? m.routers_dhcp : []
-      vlan_subnet       = "192.168.${i * 16}.0/20"
-      vxlan_br_addr     = "192.168.255.${i + 1}"
-      vxlan_subnet_mask = "255.255.255.0",
-      private_addr      = metal_device.edge[i].access_private_ipv4,
-      public_addr       = metal_device.edge[i].access_public_ipv4,
-      device_id         = metal_device.edge[i].id
-      port_id           = metal_device_network_type.edge[i].id
+      metro                  = m.metro
+      run_as_seed            = m.router_as_seed != null ? m.router_as_seed : false
+      enable_internet_access = m.enable_internet_access != null ? m.enable_internet_access : false
+      dhcp_addrs             = (m.routers_dhcp != null) ? m.routers_dhcp : []
+      vlan_subnet            = "192.168.${i * 16}.0/20"
+      vxlan_br_addr          = "192.168.255.${i + 1}"
+      vxlan_subnet_mask      = "255.255.255.0",
+      private_addr           = metal_device.edge[i].access_private_ipv4,
+      public_addr            = metal_device.edge[i].access_public_ipv4,
+      device_id              = metal_device.edge[i].id
+      port_id                = metal_device_network_type.edge[i].id
   } }
 }
 
@@ -241,13 +242,14 @@ locals {
   routers = {
     for name, router in local.routers_meta :
     (router.public_addr) => {
-      metro             = router.metro
-      vxlan_br_addr     = router.vxlan_br_addr
-      vxlan_subnet_mask = router.vxlan_subnet_mask
-      private_addr      = router.private_addr
-      public_addr       = router.public_addr
-      run_as_seed       = router.run_as_seed
-      dhcp_addrs        = router.dhcp_addrs
+      metro                  = router.metro
+      vxlan_br_addr          = router.vxlan_br_addr
+      vxlan_subnet_mask      = router.vxlan_subnet_mask
+      private_addr           = router.private_addr
+      public_addr            = router.public_addr
+      run_as_seed            = router.run_as_seed
+      enable_internet_access = router.enable_internet_access
+      dhcp_addrs             = router.dhcp_addrs
       vlans = [
         for vlan in local.vlans[name] : {
           vlan_id      = vlan.vlan_id
@@ -311,7 +313,8 @@ locals {
       hosts = {
         for router in local.routers :
         (router.public_addr) => {
-          dhcp_servers = router.dhcp_addrs
+          dhcp_servers           = router.dhcp_addrs
+          enable_internet_access = router.enable_internet_access
         }
       }
     }
