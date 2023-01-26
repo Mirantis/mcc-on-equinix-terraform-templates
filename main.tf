@@ -1,5 +1,5 @@
 # Configure the Equinix Metal Provider.
-provider "metal" {
+provider "equinix" {
     max_retries = 3
     max_retry_wait_seconds = 30
 }
@@ -7,7 +7,7 @@ provider "metal" {
 # SSH Keys management ##########################################
 
 # Create SSH Keys if they are not exist
-resource "metal_project_ssh_key" "ssh_key_object" {
+resource "equinix_metal_project_ssh_key" "ssh_key_object" {
   count = var.use_existing_ssh_key_name == "" ? 1 : 0
 
   name       = "mcc_infra_${var.edge_hostname}"
@@ -16,8 +16,8 @@ resource "metal_project_ssh_key" "ssh_key_object" {
 }
 
 # Get Project SSH Key by name
-data "metal_project_ssh_key" "infra_ssh" {
-  depends_on = [metal_project_ssh_key.ssh_key_object]
+data "equinix_metal_project_ssh_key" "infra_ssh" {
+  depends_on = [equinix_metal_project_ssh_key.ssh_key_object]
 
   search     = var.use_existing_ssh_key_name != "" ? var.use_existing_ssh_key_name : "mcc_infra_${var.edge_hostname}"
   project_id = var.project_id
@@ -37,7 +37,7 @@ locals {
 }
 
 # Create routers in each configured metro
-resource "metal_device" "edge" {
+resource "equinix_metal_device" "edge" {
   count = length(local.routers_custom_spec)
 
   hostname                = "mcc-edge-router-${var.edge_hostname}"
@@ -47,14 +47,14 @@ resource "metal_device" "edge" {
   operating_system        = var.edge_os
   billing_cycle           = var.billing_cycle
   project_id              = var.project_id
-  project_ssh_key_ids     = [data.metal_project_ssh_key.infra_ssh.id]
+  project_ssh_key_ids     = [data.equinix_metal_project_ssh_key.infra_ssh.id]
 }
 
 # Change network mode to hybrid for the edge instance
-resource "metal_device_network_type" "edge" {
-  count = length(metal_device.edge)
+resource "equinix_metal_device_network_type" "edge" {
+  count = length(equinix_metal_device.edge)
 
-  device_id = metal_device.edge[count.index].id
+  device_id = equinix_metal_device.edge[count.index].id
   type      = "hybrid"
 }
 
@@ -69,10 +69,10 @@ locals {
       vlan_subnet            = "192.168.${i * 16}.0/20"
       vxlan_br_addr          = "192.168.255.${i + 1}"
       vxlan_subnet_mask      = "255.255.255.0",
-      private_addr           = metal_device.edge[i].access_private_ipv4,
-      public_addr            = metal_device.edge[i].access_public_ipv4,
-      device_id              = metal_device.edge[i].id
-      port_id                = metal_device_network_type.edge[i].id
+      private_addr           = equinix_metal_device.edge[i].access_private_ipv4,
+      public_addr            = equinix_metal_device.edge[i].access_public_ipv4,
+      device_id              = equinix_metal_device.edge[i].id
+      port_id                = equinix_metal_device_network_type.edge[i].id
   } }
 }
 
@@ -136,7 +136,7 @@ locals {
   } }
 }
 
-resource "metal_vlan" "mcc_vlan" {
+resource "equinix_metal_vlan" "mcc_vlan" {
   for_each = local.vlans_map
 
   metro       = each.value.metro
@@ -145,9 +145,9 @@ resource "metal_vlan" "mcc_vlan" {
 }
 
 # Attach vlans to the edge instance
-resource "metal_port_vlan_attachment" "vlan_to_router" {
-  depends_on = [metal_device.edge, metal_vlan.mcc_vlan]
-  for_each   = metal_vlan.mcc_vlan
+resource "equinix_metal_port_vlan_attachment" "vlan_to_router" {
+  depends_on = [equinix_metal_device.edge, equinix_metal_vlan.mcc_vlan]
+  for_each   = equinix_metal_vlan.mcc_vlan
 
   port_name = "bond0"
   device_id = local.routers_meta[each.value.metro].port_id
@@ -158,7 +158,7 @@ locals {
   vlans = {
     for m in var.metros :
     (m.metro) => [
-      for subnet, vlan in metal_vlan.mcc_vlan : {
+      for subnet, vlan in equinix_metal_vlan.mcc_vlan : {
         metro        = vlan.metro
         vlan_id      = vlan.vxlan
         subnet       = subnet
@@ -193,7 +193,7 @@ locals {
   }
 }
 
-resource "metal_device" "seed" {
+resource "equinix_metal_device" "seed" {
   for_each = local.seed_nodes_meta
 
   hostname                = "mcc-seed-${var.edge_hostname}"
@@ -203,7 +203,7 @@ resource "metal_device" "seed" {
   operating_system        = var.edge_os
   billing_cycle           = var.billing_cycle
   project_id              = var.project_id
-  project_ssh_key_ids     = [data.metal_project_ssh_key.infra_ssh.id]
+  project_ssh_key_ids     = [data.equinix_metal_project_ssh_key.infra_ssh.id]
 
   # keep only ipv4 addresses, skipping ipv6 management
   ip_address {
@@ -217,8 +217,8 @@ resource "metal_device" "seed" {
 }
 
 # Change network mode to hybrid for the seed instance
-resource "metal_device_network_type" "seed_network" {
-  for_each = metal_device.seed
+resource "equinix_metal_device_network_type" "seed_network" {
+  for_each = equinix_metal_device.seed
 
   device_id = each.value.id
   # by default 'layer3' means hybrid-bonded
@@ -226,10 +226,10 @@ resource "metal_device_network_type" "seed_network" {
 }
 
 # Attach mgmt vlan to the seed instance
-resource "metal_port_vlan_attachment" "vlan_to_seed" {
-  for_each = metal_device.seed
+resource "equinix_metal_port_vlan_attachment" "vlan_to_seed" {
+  for_each = equinix_metal_device.seed
 
-  depends_on = [metal_device.seed, metal_vlan.mcc_vlan]
+  depends_on = [equinix_metal_device.seed, equinix_metal_vlan.mcc_vlan]
   device_id  = each.value.id
   port_name  = "bond0"
   # first vlan is mgmt related by default
@@ -270,7 +270,7 @@ locals {
 
 locals {
   seed_nodes = merge({
-  for device in metal_device.seed :
+  for device in equinix_metal_device.seed :
   (device.access_public_ipv4) => {
     metro        = local.seed_nodes_meta[device.metro].metro
     addr         = local.seed_nodes_meta[device.metro].addr

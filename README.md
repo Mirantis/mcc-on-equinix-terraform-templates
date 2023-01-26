@@ -14,7 +14,7 @@ resources are created:
 
 1. Verify that the following packages are installed:
 
-   * `terraform` >=v0.15.0
+   * `terraform` >=v1.3.0
    * `ansible-playbook` >=2.12.12
    * `ansible-lint` >=5.2.0
 
