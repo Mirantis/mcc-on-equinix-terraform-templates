@@ -58,7 +58,7 @@ resources are created:
      router, set the `enable_internet_access` parameter to configure the IP
      masquerading on the router. It is required if the Equinix regional cluster
      with private networking is going to be deployed on a public management
-     cluster (for example, on AWS or Azure) and the public Container Cloud
+     cluster (for example, on AWS) and the public Container Cloud
      endpoints must be accessible from machines. For details, see
      [Equinix documentation: Combining Hybrid and Layer 2 Modes](https://deploy.equinix.com/developers/docs/metal/layer2-networking/layer2-mode/#example-combining-hybrid-and-layer-2-modes).
    * Use the `terraform plan` command to output help messages for each required
